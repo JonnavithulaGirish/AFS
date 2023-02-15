@@ -76,8 +76,6 @@ extern int error_inject(const char* path, fuse_op operation);
 
 int unreliable_lstat(const char *path, struct stat *buf)
 {
-    char* buff ="lol";
-    afsGetAttr(path, buff);
     int ret = error_inject(path, OP_LSTAT);
     if (ret == -ERRNO_NOOP) {
         return 0;

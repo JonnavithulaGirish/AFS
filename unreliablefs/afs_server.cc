@@ -36,13 +36,15 @@ using grpc::ServerContext;
 using grpc::Status;
 using FS::AFS;
 using FS::GetAttrRequest;
+using FS::GetAttrResponse;
 
 // Logic and data behind the server's behavior.
 class AfsServiceImpl final : public AFS::Service {
   Status GetAttr(ServerContext* context, const GetAttrRequest* request,
-                  GetAttrRequest* reply) override {
-    std::string prefix("Hello ");
-    reply->set_buf(prefix + " Raww");
+                  GetAttrResponse* reply) override {
+    struct stat buf;
+    lstat(request->path, &buf);
+    memcpy(reply->statbuf, buf, sizeof(struct stat));
     return Status::OK;
   }
 };

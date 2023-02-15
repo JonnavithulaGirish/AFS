@@ -13,9 +13,8 @@ service AFS {
 
 message GetAttrRequest {
   string path = 1;
-  string buf = 2;
 }
 
-//message HelloReply {
-//  string message = 1;
-//}
+message GetAttrResponse {
+  bytes statbuf = 1;
+}

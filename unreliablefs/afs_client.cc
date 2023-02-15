@@ -33,8 +33,9 @@ using grpc::ClientContext;
 using grpc::Status;
 using FS::AFS;
 using FS::GetAttrRequest;
-// using helloworld::HelloRequest;
+using FS::GetAttrResponse;
 
+using namespace std;
 
 class AfsClientSingleton{
 
@@ -63,23 +64,22 @@ public:
       return instancePtr;
   }
 
-   int GetAttr(std::string path, std::string buf) {
+   int GetAttr(std::string path, struct stat* buf) {
     GetAttrRequest request;
     request.set_path(path);
-    request.set_buf("");
     
-    GetAttrRequest reply;
+    GetAttrResponse reply;
     
     ClientContext context;
     Status status = stub_->GetAttr(&context, request, &reply);
     
     if (status.ok()) 
     {
-      std::cout<< buf;
+      memcpy(buf, reply.statbuf, sizeof(struct stat));
       return 1;
     } 
     else {
-      std::cout << status.error_code() << ": " << status.error_message()
+      cout << status.error_code() << ": " << status.error_message()
                 << std::endl;
       return 0;
     }
@@ -89,8 +89,8 @@ public:
 
 AfsClientSingleton* AfsClientSingleton ::instancePtr = NULL;
 
-extern "C" void afsGetAttr(char* path, char* buff)
+extern "C" void afsGetAttr(char* path, struct stat *buf)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
-  afsClient->GetAttr(path, buff);
+  afsClient->GetAttr(string(path), buf);
 }

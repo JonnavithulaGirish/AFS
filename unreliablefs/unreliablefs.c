@@ -98,6 +98,8 @@ static struct fuse_opt unreliablefs_opts[] = {
 
 static int unreliablefs_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs)
 {
+    struct stat buf;
+    afsGetAttr("/home/araghavan/cs739/AFS/CMakeLists.txt", &buf);
     switch (key) {
     case KEY_HELP:
         fprintf(stderr,
