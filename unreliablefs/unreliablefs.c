@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <stdlib.h>
 
+
 #include <fuse.h>
 
 #include "unreliablefs_ops.h"
@@ -156,7 +157,7 @@ int main(int argc, char *argv[])
     }
     conf.basedir = real_path;
     size_t sz = strlen(DEFAULT_CONF_NAME) + strlen(conf.basedir) + 2;
-    conf.config_path = malloc(sz);
+    conf.config_path = (char*)malloc(sz);
     if (!conf.config_path) {
         perror("malloc");
         fuse_opt_free_args(&args);

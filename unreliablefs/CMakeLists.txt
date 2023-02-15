@@ -2,15 +2,90 @@ cmake_minimum_required(VERSION 3.10.2)
 
 include(CheckFunctionExists)
 
+set(protobuf_MODULE_COMPATIBLE TRUE)
+find_package(Protobuf CONFIG REQUIRED)
+message(STATUS "Using protobuf ${Protobuf_VERSION}")
+
+# Protobuf-compiler
+set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
+
+# Reflection
+set(_REFLECTION gRPC::grpc++_reflection)
+  if(CMAKE_CROSSCOMPILING)
+    find_program(_PROTOBUF_PROTOC protoc)
+  else()
+    set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
+  endif()
+
+# gRPC
+find_package(gRPC CONFIG REQUIRED)
+message(STATUS "Using gRPC ${gRPC_VERSION}")
+set(_GRPC_GRPCPP gRPC::grpc++)
+set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
+
+# Proto file
+get_filename_component(hw_proto "/home/girish/CS739/unreliablefs/unreliablefs/proto/afs.proto" ABSOLUTE)
+get_filename_component(hw_proto_path "${hw_proto}" PATH)
+
+# Generated sources
+set(hw_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/afs.pb.cc")
+set(hw_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/afs.pb.h")
+set(hw_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/afs.grpc.pb.cc")
+set(hw_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/afs.grpc.pb.h")
+
+add_custom_command(
+      OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
+      COMMAND ${_PROTOBUF_PROTOC}
+      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
+        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
+        -I "${hw_proto_path}"
+        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+        "${hw_proto}"
+      DEPENDS "${hw_proto}")
+
+# Include generated *.pb.h files
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+
+add_library(hw_grpc_proto
+  ${hw_grpc_srcs}
+  ${hw_grpc_hdrs}
+  ${hw_proto_srcs}
+  ${hw_proto_hdrs})
+target_link_libraries(hw_grpc_proto
+  ${_REFLECTION}
+  ${_GRPC_GRPCPP}
+  ${_PROTOBUF_LIBPROTOBUF})
+
+
 set(UNRELIABLEFS_SRC conf.c
                      unreliablefs.c
                      unreliablefs_errinj.c
-                     unreliablefs_ops.c)
+                     unreliablefs_ops.c
+                     afs_client.cc)
+
+foreach(_target
+  afs_server)
+  add_executable(${_target} "${_target}.cc")
+  target_link_libraries(${_target}
+    hw_grpc_proto
+    ${_REFLECTION}
+    ${_GRPC_GRPCPP}
+    ${_PROTOBUF_LIBPROTOBUF})
+endforeach()
+
 
 find_package(FUSE 2.9 REQUIRED)
 
 add_definitions(${FUSE_DEFINITIONS})
-add_executable(${PROJECT_NAME} ${UNRELIABLEFS_SRC})
+add_executable(${PROJECT_NAME} ${UNRELIABLEFS_SRC}
+    ${hw_proto_srcs}
+    ${hw_grpc_srcs})
+
+target_link_libraries(${PROJECT_NAME}
+  ${_REFLECTION}
+  ${_GRPC_GRPCPP}
+  ${_PROTOBUF_LIBPROTOBUF})
+
 target_include_directories(${PROJECT_NAME} PRIVATE ${FUSE_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${FUSE_LIBRARIES})
 
@@ -39,3 +114,4 @@ add_subdirectory(tests)
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 install(FILES "unreliablefs.1" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man1)
 install(FILES "unreliablefs.conf.5" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man5)
+

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.AFS";
+option java_outer_classname = "AFS";
+option objc_class_prefix = "HLW";
+
+package FS;
+
+service AFS {
+  rpc GetAttr (GetAttrRequest) returns (GetAttrRequest) {}
+}
+
+message GetAttrRequest {
+  string path = 1;
+  string buf = 2;
+}
+
+//message HelloReply {
+//  string message = 1;
+//}

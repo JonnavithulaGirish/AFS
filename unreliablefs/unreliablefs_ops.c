@@ -9,7 +9,9 @@
 #include <sys/file.h>
 #ifdef HAVE_XATTR
 #include <sys/xattr.h>
+#include"fuseoverrides.h"
 #endif /* HAVE_XATTR */
+#include "afs_client.h"
 
 #ifdef linux
 /* For pread()/pwrite()/utimensat() */
@@ -74,6 +76,8 @@ extern int error_inject(const char* path, fuse_op operation);
 
 int unreliable_lstat(const char *path, struct stat *buf)
 {
+    char* buff ="lol";
+    afsGetAttr(path, buff);
     int ret = error_inject(path, OP_LSTAT);
     if (ret == -ERRNO_NOOP) {
         return 0;
