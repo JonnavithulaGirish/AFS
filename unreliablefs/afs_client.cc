@@ -17,10 +17,18 @@
  */
 
 #include <iostream>
+#include <errno.h>
 #include <memory>
 #include <string>
-
+#include <filesystem>
+#include <sys/stat.h>
+#include <openssl/sha.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdarg.h>
+#include <fuse.h>
 #include <grpcpp/grpcpp.h>
+
 
 #ifdef BAZEL_BUILD
 #include "examples/protos/helloworld.grpc.pb.h"
@@ -28,69 +36,199 @@
 #include "afs.grpc.pb.h"
 #endif
 
-using grpc::Channel;
-using grpc::ClientContext;
-using grpc::Status;
 using FS::AFS;
 using FS::GetAttrRequest;
 using FS::GetAttrResponse;
+using FS::OpenRequest;
+using FS::OpenResponse;
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
 
 using namespace std;
 
-class AfsClientSingleton{
+char *mountPoint;
+char *cacheDir;
 
-private:  
+string sha256(const string str)
+{
+  unsigned char hash[SHA256_DIGEST_LENGTH];
+  SHA256_CTX sha256;
+  SHA256_Init(&sha256);
+  SHA256_Update(&sha256, str.c_str(), str.size());
+  SHA256_Final(hash, &sha256);
+  stringstream ss;
+  for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+  {
+    ss << hex << setw(2) << setfill('0') << (int)hash[i];
+  }
+  return ss.str();
+}
+
+class AfsClientSingleton
+{
+
+private:
   std::unique_ptr<AFS::Stub> stub_;
-  static AfsClientSingleton* instancePtr;
+  static AfsClientSingleton *instancePtr;
+  string m_mountPoint;
+  string m_cacheDir;
 
   AfsClientSingleton()
   {
   }
 
-  AfsClientSingleton(std::shared_ptr<Channel> channel)
-      : stub_(AFS::NewStub(channel)) {}
-   
+  AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
+  {
+    m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
+    m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
+  }
+
 public:
-  AfsClientSingleton(const AfsClientSingleton& obj) = delete;
- 
-  static AfsClientSingleton* getInstance(std::string serverIP)
+  AfsClientSingleton(const AfsClientSingleton &obj) = delete;
+
+  static AfsClientSingleton *getInstance(std::string serverIP)
   {
     if (instancePtr == nullptr)
     {
-      instancePtr = new AfsClientSingleton(grpc::CreateChannel(serverIP, grpc::InsecureChannelCredentials()));  
+      instancePtr = new AfsClientSingleton(grpc::CreateChannel(serverIP, grpc::InsecureChannelCredentials()));
       return instancePtr;
     }
     else
       return instancePtr;
   }
 
-   int GetAttr(std::string path, struct stat* buf) {
+  int GetAttr(std::string path, struct stat *buf)
+  {
     GetAttrRequest request;
-    request.set_path(path);
-    
     GetAttrResponse reply;
-    
     ClientContext context;
+
+    //Setting request parameters
+    path = removeMountPointPrefix(path);
+    request.set_path(path);
+
+    //Trigger RPC Call for GetAttr
     Status status = stub_->GetAttr(&context, request, &reply);
-    
-    if (status.ok()) 
+
+    //On Response received
+    if (status.ok() && reply.status() == 1)
     {
-      memcpy(buf, reply.statbuf, sizeof(struct stat));
+      memcpy((char *)buf, reply.statbuf().c_str(), sizeof(struct stat));
       return 1;
-    } 
-    else {
-      cout << status.error_code() << ": " << status.error_message()
-                << std::endl;
-      return 0;
+    }
+    else
+    {
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return -1;
     }
   }
-  
+
+  string removeMountPointPrefix(string inputPath)
+  {
+    string s_inputPath = filesystem::absolute(filesystem::path(inputPath)).string();
+    if(s_inputPath.find(m_mountPoint) != string::npos){
+      return s_inputPath.substr(m_mountPoint.size());
+    }
+    return inputPath;
+  }
+
+  int Open(std::string path, int flags)
+  {
+    OpenRequest request;
+    OpenResponse reply;
+    ClientContext context;
+    int isRPCRequired = 0; 
+
+    path = removeMountPointPrefix(path);
+    string absoluteCachePath = m_cacheDir + sha256(path);
+    int fd = open(absoluteCachePath.c_str(), O_RDONLY);
+
+    // if File not Found in local cache
+    if (fd == -1)
+    {
+      isRPCRequired = 1;
+    }
+    else
+    {
+      // if file found in local cache
+      struct stat statBuf, lstatBuf;
+      string getArrPath(path);
+
+      // Call getAttr to check if local file data is not stale
+      GetAttr(getArrPath, &statBuf);
+      memset(&lstatBuf, 0, sizeof(struct stat));
+      if (lstat(absoluteCachePath.c_str(), &lstatBuf) == -1)
+      {
+        //return error status on failure
+        return -errno;
+      }
+
+      if (statBuf.st_mtim.tv_sec < lstatBuf.st_mtim.tv_sec)
+      {
+        //if local file data is not stale return fd
+        return fd;
+      }
+      else if (statBuf.st_mtim.tv_sec == lstatBuf.st_mtim.tv_sec)
+      {
+        if (statBuf.st_mtim.tv_nsec < lstatBuf.st_mtim.tv_nsec)
+        {
+          //if local file data is not stale return fd
+          return fd;
+        }
+        else
+        {
+          isRPCRequired = 1;
+        }
+      }
+      else
+      {
+        isRPCRequired = 1;
+      }
+    }
+
+    // isRPCRequired==1 -> do RPC call and create new file in local cache and return FD
+    if (isRPCRequired == 1)
+    {
+      request.set_path(path);
+      Status status = stub_->Open(&context, request, &reply);
+      
+      if (status.ok() && reply.status() == 1)
+      {
+        //Save the data in a new file and return file descriptor
+        int fd1 = open(absoluteCachePath.c_str(), O_CREAT | O_RDWR);
+        if (fd1 == -1)
+        {
+          return -errno;
+        }
+        int ret = pwrite(fd1, reply.filedata().c_str(), reply.filedata().size(), 0);
+        if (ret == -1)
+        {
+          ret = -errno;
+        }
+        fsync(fd1);
+        return fd1;
+      }
+      else
+      {
+        cout << status.error_code() << ": " << status.error_message() << std::endl;
+        return -1;
+      }
+    }
+    return -1;
+  }
 };
 
-AfsClientSingleton* AfsClientSingleton ::instancePtr = NULL;
+AfsClientSingleton *AfsClientSingleton ::instancePtr = NULL;
 
-extern "C" void afsGetAttr(char* path, struct stat *buf)
+extern "C" int afsGetAttr(char *path, struct stat *buf)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
-  afsClient->GetAttr(string(path), buf);
+  return afsClient->GetAttr(string(path), buf);
+}
+
+extern "C" int afsOpen(char *path, int flags)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Open(string(path), flags);
 }

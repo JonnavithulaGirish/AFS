@@ -13,11 +13,14 @@
 
 #include "unreliablefs_ops.h"
 #include "unreliablefs.h"
+#include "afs_client.h"
 
 extern struct err_inj_q *config_init(const char* conf_path);
 extern void config_delete(struct err_inj_q *config);
 
 struct unreliablefs_config conf;
+extern char *mountPoint;
+extern char *cacheDir;
 
 static struct fuse_operations unreliable_ops = {
     .getattr     = unreliable_getattr,
@@ -98,8 +101,6 @@ static struct fuse_opt unreliablefs_opts[] = {
 
 static int unreliablefs_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs)
 {
-    struct stat buf;
-    afsGetAttr("/home/araghavan/cs739/AFS/CMakeLists.txt", &buf);
     switch (key) {
     case KEY_HELP:
         fprintf(stderr,
@@ -165,6 +166,14 @@ int main(int argc, char *argv[])
         fuse_opt_free_args(&args);
         return EXIT_FAILURE;
     }
+
+    cacheDir = (char *)malloc(strlen(conf.basedir));
+    strcpy(cacheDir, conf.basedir);
+    
+    mountPoint = (char *)malloc(strlen(argv[1]));
+    strcpy(mountPoint, argv[1]);
+    
+
     /* read configuration file on start */
     snprintf(conf.config_path, sz, "%s/%s", conf.basedir, DEFAULT_CONF_NAME);
     conf.errors = config_init(conf.config_path);
@@ -188,6 +197,6 @@ int main(int argc, char *argv[])
     if (!ret) {
         fprintf(stdout, "random seed = %d\n", conf.seed);
     }
-
+    
     return ret;
 }

@@ -100,8 +100,12 @@ int unreliable_getattr(const char *path, struct stat *buf)
         return ret;
     }
 
+    // if (lstat(path, buf) == -1) {
+    //     return -errno;
+    // }
+    
     memset(buf, 0, sizeof(struct stat));
-    if (lstat(path, buf) == -1) {
+    if(afsGetAttr(path,buf) == -1){
         return -errno;
     }
 
@@ -297,20 +301,24 @@ int unreliable_truncate(const char *path, off_t length)
 }
 
 int unreliable_open(const char *path, struct fuse_file_info *fi)
-{
+{   
     int ret = error_inject(path, OP_OPEN);
     if (ret == -ERRNO_NOOP) {
         return 0;
     } else if (ret) {
         return ret;
     }
+    // ret = open(path, fi->flags);
+    // if (ret == -1) {
+    //     return -errno;
+    // }
+    // fi->fh = ret;
 
-    ret = open(path, fi->flags);
-    if (ret == -1) {
+    ret = afsOpen(path, fi->flags);
+    if(ret == -1){
         return -errno;
     }
     fi->fh = ret;
-
     return 0;
 }
 

@@ -19,7 +19,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
-
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -37,14 +38,73 @@ using grpc::Status;
 using FS::AFS;
 using FS::GetAttrRequest;
 using FS::GetAttrResponse;
+using FS::OpenRequest;
+using FS::OpenResponse;
+using namespace std;
+
+string serverBaseDir("/home/girish/serverfs/");
 
 // Logic and data behind the server's behavior.
 class AfsServiceImpl final : public AFS::Service {
   Status GetAttr(ServerContext* context, const GetAttrRequest* request,
                   GetAttrResponse* reply) override {
+
+    string path = serverBaseDir + request->path();
+    std::cout<< "GetAttr Got Called :: "<< path <<std::endl;
     struct stat buf;
-    lstat(request->path, &buf);
-    memcpy(reply->statbuf, buf, sizeof(struct stat));
+
+    //Get File Attributes
+    int ret= lstat(path.c_str(), &buf);
+    if ( ret == -1)
+    {
+      //return error status on failure
+      reply->set_status(-1);
+	    return Status::OK;
+    }
+
+    //Send File Attributes Data
+    reply->set_statbuf((char *)&buf,sizeof(struct stat));
+    reply->set_status(1);
+    return Status::OK;
+  }
+  
+  Status Open(ServerContext* context, const OpenRequest* request,
+                  OpenResponse* reply) override {
+    
+    string path = serverBaseDir + request->path();
+    std::cout<< "Open Got Called"<< path << std::endl;
+
+    //Open File 
+    int fd = open(path.c_str(), request->flags());
+    if (fd == -1) {
+      //return error status on failure
+      reply->set_status(-1);
+	    return Status::OK;
+    }
+
+    //Get File Attributes
+    struct stat statBuf;
+    int fret= lstat(path.c_str(), &statBuf);
+    if ( fret == -1)
+    {
+      //return error status on failure
+      reply->set_status(-1);
+	    return Status::OK;
+    }
+
+    //Read File
+    char *buf = new char[statBuf.st_size];
+    int ret = pread(fd, buf, statBuf.st_size, 0);
+    if (ret == -1) {
+      //return error status on failure
+      reply->set_status(-1);
+	    return Status::OK;
+    }
+
+    //Send File Data
+    reply->set_filedata(buf, statBuf.st_size);
+    std::cout<<  reply->filedata()<< " is being returned" << std::endl;
+    reply->set_status(1);
     return Status::OK;
   }
 };
@@ -71,6 +131,8 @@ void RunServer() {
 }
 
 int main(int argc, char** argv) {
+  if (argc > 1)
+    serverBaseDir = argv[1];
   RunServer();
   return 0;
 }

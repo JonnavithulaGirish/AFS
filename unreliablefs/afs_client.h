@@ -1,4 +1,5 @@
 #ifdef __cplusplus
 extern "C"
 #endif
-void afsGetAttr(char* path, struct stat *buf);
+int afsGetAttr(char* path, struct stat *buf);
+int afsOpen(char* path, int flags);
