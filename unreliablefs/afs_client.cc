@@ -135,99 +135,71 @@ public:
 
   int Open(std::string path, int flags)
   {
-    OpenRequest request;
-    OpenResponse reply;
-    ClientContext context;
-    int isRPCRequired = 0; 
-
     path = removeMountPointPrefix(path);
     string absoluteCachePath = m_cacheDir + sha256(path);
     int fd = open(absoluteCachePath.c_str(), O_RDONLY);
 
-    // if File not Found in local cache
-    if (fd == -1)
+    if (fd != -1)
     {
-      isRPCRequired = 1;
-    }
-    else
-    {
-      // if file found in local cache
+      // file in local cache, check if stale
       struct stat statBuf, lstatBuf;
-      string getArrPath(path);
 
       // Call getAttr to check if local file data is not stale
-      GetAttr(getArrPath, &statBuf);
+      GetAttr(path, &statBuf);
       memset(&lstatBuf, 0, sizeof(struct stat));
       if (lstat(absoluteCachePath.c_str(), &lstatBuf) == -1)
       {
         //return error status on failure
+        // never reaches here!
         return -errno;
       }
 
-      if (statBuf.st_mtim.tv_sec < lstatBuf.st_mtim.tv_sec)
-      {
-        //if local file data is not stale return fd
+      // cache not stale
+      if ((statBuf.st_mtim.tv_sec < lstatBuf.st_mtim.tv_sec) || (statBuf.st_mtim.tv_sec == lstatBuf.st_mtim.tv_sec && statBuf.st_mtim.tv_nsec < lstatBuf.st_mtim.tv_nsec))
         return fd;
-      }
-      else if (statBuf.st_mtim.tv_sec == lstatBuf.st_mtim.tv_sec)
-      {
-        if (statBuf.st_mtim.tv_nsec < lstatBuf.st_mtim.tv_nsec)
-        {
-          //if local file data is not stale return fd
-          return fd;
-        }
-        else
-        {
-          isRPCRequired = 1;
-        }
-      }
-      else
-      {
-        isRPCRequired = 1;
-      }
     }
 
-    // isRPCRequired==1 -> do RPC call and create new file in local cache and return FD
-    if (isRPCRequired == 1)
-    {
-      request.set_path(path);
-      Status status = stub_->Open(&context, request, &reply);
+    OpenRequest request;
+    OpenResponse reply;
+    ClientContext context;
+
+    request.set_path(path);
+    request.set_flags(flags);
+    Status status = stub_->Open(&context, request, &reply);
       
-      if (status.ok() && reply.status() == 1)
+    if (status.ok() && reply.status() == 1)
+    {
+      //Save the data in a new file and return file descriptor
+      int fd1 = open(absoluteCachePath.c_str(), O_CREAT | O_RDWR);
+      if (fd1 == -1)
       {
-        //Save the data in a new file and return file descriptor
-        int fd1 = open(absoluteCachePath.c_str(), O_CREAT | O_RDWR);
-        if (fd1 == -1)
-        {
-          return -errno;
-        }
-        int ret = pwrite(fd1, reply.filedata().c_str(), reply.filedata().size(), 0);
-        if (ret == -1)
-        {
-          ret = -errno;
-        }
-        fsync(fd1);
-        return fd1;
+        return -errno;
       }
-      else
+      int ret = pwrite(fd1, reply.filedata().c_str(), reply.filedata().size(), 0);
+      if (ret == -1)
       {
-        cout << status.error_code() << ": " << status.error_message() << std::endl;
-        return -1;
+        ret = -errno;
       }
+      fsync(fd1);
+      return fd1;
     }
-    return -1;
+    else
+    {
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return -1;
+    }
   }
 };
 
 AfsClientSingleton *AfsClientSingleton ::instancePtr = NULL;
 
-extern "C" int afsGetAttr(char *path, struct stat *buf)
+extern "C" int afsGetAttr(const char *path, struct stat *buf)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
   return afsClient->GetAttr(string(path), buf);
 }
 
-extern "C" int afsOpen(char *path, int flags)
+extern "C" int afsOpen(const char *path, int flags)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
   return afsClient->Open(string(path), flags);

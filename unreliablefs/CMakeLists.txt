@@ -24,7 +24,7 @@ set(_GRPC_GRPCPP gRPC::grpc++)
 set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
 # Proto file
-get_filename_component(hw_proto "/home/girish/CS739/unreliablefs/unreliablefs/proto/afs.proto" ABSOLUTE)
+get_filename_component(hw_proto "./proto/afs.proto" ABSOLUTE)
 get_filename_component(hw_proto_path "${hw_proto}" PATH)
 
 # Generated sources

@@ -84,8 +84,8 @@ class AfsServiceImpl final : public AFS::Service {
 
     //Get File Attributes
     struct stat statBuf;
-    int fret= lstat(path.c_str(), &statBuf);
-    if ( fret == -1)
+    int ret = lstat(path.c_str(), &statBuf);
+    if (ret == -1)
     {
       //return error status on failure
       reply->set_status(-1);
@@ -94,7 +94,7 @@ class AfsServiceImpl final : public AFS::Service {
 
     //Read File
     char *buf = new char[statBuf.st_size];
-    int ret = pread(fd, buf, statBuf.st_size, 0);
+    ret = pread(fd, buf, statBuf.st_size, 0);
     if (ret == -1) {
       //return error status on failure
       reply->set_status(-1);
@@ -105,6 +105,9 @@ class AfsServiceImpl final : public AFS::Service {
     reply->set_filedata(buf, statBuf.st_size);
     std::cout<<  reply->filedata()<< " is being returned" << std::endl;
     reply->set_status(1);
+    
+    delete[] buf;
+
     return Status::OK;
   }
 };
