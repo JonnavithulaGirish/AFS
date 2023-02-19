@@ -35,8 +35,8 @@ static struct fuse_operations unreliable_ops = {
     .chmod       = unreliable_chmod,
     .chown       = unreliable_chown,
     .truncate    = unreliable_truncate,
-    .open	 = unreliable_open,
-    .read	 = unreliable_read,
+    .open	     = unreliable_open,
+    .read	     = unreliable_read,
     .write       = unreliable_write,
     .statfs      = unreliable_statfs,
     .flush       = unreliable_flush,
@@ -172,6 +172,7 @@ int main(int argc, char *argv[])
     
     mountPoint = (char *)malloc(strlen(argv[1]));
     strcpy(mountPoint, argv[1]);
+    
     // int x= afsOpen("/home/girish/fusemnt/abcd", O_RDONLY);
     // printf("%d\n", x);
 

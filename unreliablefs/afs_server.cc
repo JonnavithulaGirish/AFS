@@ -24,6 +24,7 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <time.h>
 
 #ifdef BAZEL_BUILD
 #include "examples/protos/helloworld.grpc.pb.h"
@@ -40,6 +41,8 @@ using FS::GetAttrRequest;
 using FS::GetAttrResponse;
 using FS::OpenRequest;
 using FS::OpenResponse;
+using FS::CloseRequest;
+using FS::CloseResponse;
 using namespace std;
 
 string serverBaseDir("/home/girish/serverfs/");
@@ -107,7 +110,45 @@ class AfsServiceImpl final : public AFS::Service {
     reply->set_status(1);
     
     delete[] buf;
+    close(fd);
+    return Status::OK;
+  }
 
+  Status Close(ServerContext* context, const CloseRequest* request,
+                  CloseResponse* reply) override {
+    
+    string path = serverBaseDir + request->path();
+    std::cout<< "Close Got Called"<< path << std::endl;
+
+    time_t seconds = time (NULL);
+    string tempPath(path + std::to_string(seconds));
+    //Open File 
+    int fd = open(tempPath.c_str(), O_CREAT | O_RDWR, 0777);
+    if (fd == -1) {
+      //return error status on failure
+      reply->set_status(-1);
+	    return Status::OK;
+    }
+
+    //Write File
+    int ret = pwrite(fd, request->filedata().c_str(), request->filedata().size(), 0);
+    if (ret == -1) {
+      //return error status on failure
+      reply->set_status(-1);
+	    return Status::OK;
+    }
+
+    if(rename(tempPath.c_str(), path.c_str()) == -1){
+      //return error status on failure
+      reply->set_status(-1);
+	    return Status::OK;
+    }
+
+    close(fd);
+
+    //Send File Data
+    reply->set_status(1);
+    
     return Status::OK;
   }
 };

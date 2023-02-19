@@ -10,7 +10,19 @@ package FS;
 service AFS {
   rpc GetAttr (GetAttrRequest) returns (GetAttrResponse) {}
   rpc Open (OpenRequest) returns (OpenResponse) {}
+  rpc Close (CloseRequest) returns (CloseResponse){}
 }
+
+
+message CloseRequest {
+  string path = 1;
+  bytes  fileData = 2;
+}
+
+message CloseResponse {
+  int32 status = 1;
+}
+
 
 message OpenRequest {
   string path = 1;

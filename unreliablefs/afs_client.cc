@@ -28,6 +28,8 @@
 #include <stdarg.h>
 #include <fuse.h>
 #include <grpcpp/grpcpp.h>
+#include <ios>
+#include <fstream>
 
 
 #ifdef BAZEL_BUILD
@@ -41,6 +43,8 @@ using FS::GetAttrRequest;
 using FS::GetAttrResponse;
 using FS::OpenRequest;
 using FS::OpenResponse;
+using FS::CloseRequest;
+using FS::CloseResponse;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -72,11 +76,14 @@ private:
   std::unique_ptr<AFS::Stub> stub_;
   static AfsClientSingleton *instancePtr;
   string m_mountPoint;
-  string m_cacheDir="/home/girish/afscache/";
+  string m_cacheDir;
+  std::unordered_map <int,std::string> fileMap;
 
   AfsClientSingleton()
   {
   }
+
+  
 
   AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
   {
@@ -99,6 +106,7 @@ public:
     else
       return instancePtr;
   }
+
 
   int GetAttr(std::string path, struct stat *buf)
   {
@@ -130,14 +138,9 @@ public:
   {
    
     string s_inputPath = filesystem::absolute(filesystem::path(inputPath)).string();
-    cout<< "Input string :: "<< inputPath  << endl;
-    cout<< "m_mountPoint :: "<< m_mountPoint  << endl;
-    cout<< "m_cacheDir :: "<< m_cacheDir  << endl;
-
     if(s_inputPath.find(m_cacheDir) != string::npos){
       return s_inputPath.substr(m_cacheDir.size());
     }
-    cout<< "Input string :: "<< inputPath  << endl;
     return inputPath;
   }
 
@@ -146,11 +149,6 @@ public:
     path = removeMountPointPrefix(path);
     string absoluteCachePath = m_cacheDir + sha256(path);
     int fd = open(absoluteCachePath.c_str(), O_RDONLY);
-
-    cout<< "path :: "<<path  << endl;
-    cout<< "absoluteCachePath :: "<<absoluteCachePath  << endl;
-
-
     if (fd != -1)
     {
       // file in local cache, check if stale
@@ -166,16 +164,11 @@ public:
         return -errno;
       }
 
-      cout<< "statBuf.st_mtim.tv_sec :: "<< statBuf.st_mtim.tv_sec  << endl;
-      cout<< "statBuf.st_mtim.tv_sec :: "<< statBuf.st_mtim.tv_nsec  << endl;
-
-      cout<< "lstatBuf.st_mtim.tv_sec :: "<< lstatBuf.st_mtim.tv_sec  << endl;
-      cout<< "lstatBuf.st_mtim.tv_sec :: "<< lstatBuf.st_mtim.tv_nsec  << endl;
-
-
       // cache not stale
-      if ((statBuf.st_mtim.tv_sec < lstatBuf.st_mtim.tv_sec) || (statBuf.st_mtim.tv_sec == lstatBuf.st_mtim.tv_sec && statBuf.st_mtim.tv_nsec < lstatBuf.st_mtim.tv_nsec))
+      if ((statBuf.st_mtim.tv_sec < lstatBuf.st_mtim.tv_sec) || (statBuf.st_mtim.tv_sec == lstatBuf.st_mtim.tv_sec && statBuf.st_mtim.tv_nsec < lstatBuf.st_mtim.tv_nsec)){
+        fileMap[fd] = path;
         return fd;
+      }
     }
 
     OpenRequest request;
@@ -185,11 +178,11 @@ public:
     request.set_path(path);
     request.set_flags(flags);
     Status status = stub_->Open(&context, request, &reply);
-    cout<< request.path() << "calling server with this" << endl;
+    cout << "calling Open with the following path :: " << request.path()<< endl;
     if (status.ok() && reply.status() == 1)
     {
       //Save the data in a new file and return file descriptor
-      int fd1 = open(absoluteCachePath.c_str(), O_RDWR| O_CREAT , 0666);
+      int fd1 = open(absoluteCachePath.c_str(), O_WRONLY| O_CREAT,0777);
       if (fd1 == -1)
       {
         return -errno;
@@ -200,12 +193,61 @@ public:
         ret = -errno;
       }
       fsync(fd1);
+      fileMap[fd1] = path;
+      cout << "created file on client with the following name :: " << absoluteCachePath << endl;
       return fd1;
     }
     else
     {
+      cout << "Some Error on AfsOpen()" <<endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
+    }
+  }
+
+  int Close(int fh){
+    CloseRequest request;
+    CloseResponse reply;
+    ClientContext context;
+    std::string serverPath;
+    
+    
+    if (fileMap.find(fh) == fileMap.end())
+        return -1;
+    else
+        serverPath = fileMap[fh];
+    
+    string absoluteCachePath = m_cacheDir + sha256(serverPath);
+    //Get File Attributes
+    struct stat statBuf;
+    if (lstat(absoluteCachePath.c_str(), &statBuf) == -1)
+    {
+      //return error status on failure
+      return -1;
+    }
+    //cout << "lstat called on local client and fileinode num is :: "<< statBuf.st_ino <<endl;
+
+    //Read File
+    char *buf = new char[statBuf.st_size];
+    if (pread(fh, buf, statBuf.st_size, 0) == -1) {
+      //return error status on failure
+      return -1;
+    }
+    cout << "file reading is complete on client :: "<< buf <<endl;
+    //Send File Data
+    request.set_path(serverPath);
+    request.set_filedata(buf, statBuf.st_size);
+    cout << "Calling AfsClose with the following serverPath :: "<< request.path() <<endl;
+    std::cout<<  request.filedata()<< " is being sent" << std::endl;
+    Status status = stub_->Close(&context, request, &reply);
+      
+    if (status.ok() && reply.status() == 1){
+      return 1;
+    }
+    else{
+        cout << "Some Error on AfsOpen()" <<endl;
+        cout << status.error_code() << ": " << status.error_message() << std::endl;
+        return -1;
     }
   }
 };
@@ -222,4 +264,11 @@ extern "C" int afsOpen(const char *path, int flags)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
   return afsClient->Open(string(path), flags);
+}
+
+
+extern "C" int afsClose(int fh)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Close(fh);
 }

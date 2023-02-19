@@ -329,6 +329,7 @@ int unreliable_open(const char *path, struct fuse_file_info *fi)
 int unreliable_read(const char *path, char *buf, size_t size, off_t offset,
                     struct fuse_file_info *fi)
 {
+    printf("read triggered\n");
     int ret = error_inject(path, OP_READ);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -339,22 +340,26 @@ int unreliable_read(const char *path, char *buf, size_t size, off_t offset,
     int fd;
 
     if (fi == NULL) {
-	fd = open(path, O_RDONLY);
+	fd = afsOpen(path, O_RDONLY);
+    printf("filedesciptor on client is :: %d\n",fd);
     } else {
 	fd = fi->fh;
+    printf("filedesciptor on client is +ve flow :: %d\n",fd);
     }
 
     if (fd == -1) {
-	return -errno;
+        printf("yo error");
+	    return -errno;
     }
 
     ret = pread(fd, buf, size, offset);
     if (ret == -1) {
+        printf("yo error 2 %d\n",fd);
         ret = -errno;
     }
 
     if (fi == NULL) {
-	close(fd);
+	    close(fd);
     }
 
     return ret;
@@ -373,7 +378,7 @@ int unreliable_write(const char *path, const char *buf, size_t size,
     int fd;
     (void) fi;
     if(fi == NULL) {
-	fd = open(path, O_WRONLY);
+	fd = afsOpen(path, O_WRONLY);
     } else {
 	fd = fi->fh;
     }
@@ -420,7 +425,12 @@ int unreliable_flush(const char *path, struct fuse_file_info *fi)
         return ret;
     }
 
-    ret = close(dup(fi->fh));
+    // ret = close(dup(fi->fh));
+    // if (ret == -1) {
+    //     return -errno;
+    // }
+
+    ret = afsClose(dup(fi->fh));
     if (ret == -1) {
         return -errno;
     }
@@ -437,7 +447,12 @@ int unreliable_release(const char *path, struct fuse_file_info *fi)
         return ret;
     }
 
-    ret = close(fi->fh);
+    // ret = close(fi->fh);
+    // if (ret == -1) {
+    //     return -errno;
+    // }
+
+    ret = afsClose(fi->fh);
     if (ret == -1) {
         return -errno;
     }
