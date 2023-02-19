@@ -83,8 +83,12 @@ int unreliable_lstat(const char *path, struct stat *buf)
         return ret;
     }
 
+    // if (lstat(path, buf) == -1) {
+    //     return -errno;
+    // }
+
     memset(buf, 0, sizeof(struct stat));
-    if (lstat(path, buf) == -1) {
+    if(afsGetAttr(path,buf) == -1){
         return -errno;
     }
 

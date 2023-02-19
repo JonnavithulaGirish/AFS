@@ -72,7 +72,7 @@ private:
   std::unique_ptr<AFS::Stub> stub_;
   static AfsClientSingleton *instancePtr;
   string m_mountPoint;
-  string m_cacheDir;
+  string m_cacheDir="/home/girish/afscache/";
 
   AfsClientSingleton()
   {
@@ -80,8 +80,10 @@ private:
 
   AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
   {
-    m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
-    m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
+     m_mountPoint= mountPoint;
+     m_cacheDir="/home/girish/afscache/";
+    //m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
+    //m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
   }
 
 public:
@@ -126,10 +128,16 @@ public:
 
   string removeMountPointPrefix(string inputPath)
   {
+   
     string s_inputPath = filesystem::absolute(filesystem::path(inputPath)).string();
-    if(s_inputPath.find(m_mountPoint) != string::npos){
-      return s_inputPath.substr(m_mountPoint.size());
+    cout<< "Input string :: "<< inputPath  << endl;
+    cout<< "m_mountPoint :: "<< m_mountPoint  << endl;
+    cout<< "m_cacheDir :: "<< m_cacheDir  << endl;
+
+    if(s_inputPath.find(m_cacheDir) != string::npos){
+      return s_inputPath.substr(m_cacheDir.size());
     }
+    cout<< "Input string :: "<< inputPath  << endl;
     return inputPath;
   }
 
@@ -138,6 +146,10 @@ public:
     path = removeMountPointPrefix(path);
     string absoluteCachePath = m_cacheDir + sha256(path);
     int fd = open(absoluteCachePath.c_str(), O_RDONLY);
+
+    cout<< "path :: "<<path  << endl;
+    cout<< "absoluteCachePath :: "<<absoluteCachePath  << endl;
+
 
     if (fd != -1)
     {
@@ -154,6 +166,13 @@ public:
         return -errno;
       }
 
+      cout<< "statBuf.st_mtim.tv_sec :: "<< statBuf.st_mtim.tv_sec  << endl;
+      cout<< "statBuf.st_mtim.tv_sec :: "<< statBuf.st_mtim.tv_nsec  << endl;
+
+      cout<< "lstatBuf.st_mtim.tv_sec :: "<< lstatBuf.st_mtim.tv_sec  << endl;
+      cout<< "lstatBuf.st_mtim.tv_sec :: "<< lstatBuf.st_mtim.tv_nsec  << endl;
+
+
       // cache not stale
       if ((statBuf.st_mtim.tv_sec < lstatBuf.st_mtim.tv_sec) || (statBuf.st_mtim.tv_sec == lstatBuf.st_mtim.tv_sec && statBuf.st_mtim.tv_nsec < lstatBuf.st_mtim.tv_nsec))
         return fd;
@@ -166,11 +185,11 @@ public:
     request.set_path(path);
     request.set_flags(flags);
     Status status = stub_->Open(&context, request, &reply);
-      
+    cout<< request.path() << "calling server with this" << endl;
     if (status.ok() && reply.status() == 1)
     {
       //Save the data in a new file and return file descriptor
-      int fd1 = open(absoluteCachePath.c_str(), O_CREAT | O_RDWR);
+      int fd1 = open(absoluteCachePath.c_str(), O_RDWR| O_CREAT , 0666);
       if (fd1 == -1)
       {
         return -errno;

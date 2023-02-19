@@ -6,7 +6,7 @@
 
 int main(){
     struct stat buf;
-    int x= open("/home/girish/serverfs/abcd", O_RDONLY);
+    int x= open("/home/girish/fusemnt/abcd", O_RDONLY);
     printf("%d\n", x);
     close(x);
 }

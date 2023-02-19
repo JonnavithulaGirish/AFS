@@ -172,7 +172,8 @@ int main(int argc, char *argv[])
     
     mountPoint = (char *)malloc(strlen(argv[1]));
     strcpy(mountPoint, argv[1]);
-    
+    // int x= afsOpen("/home/girish/fusemnt/abcd", O_RDONLY);
+    // printf("%d\n", x);
 
     /* read configuration file on start */
     snprintf(conf.config_path, sz, "%s/%s", conf.basedir, DEFAULT_CONF_NAME);
