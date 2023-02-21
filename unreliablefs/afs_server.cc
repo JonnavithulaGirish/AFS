@@ -68,7 +68,7 @@ class AfsServiceImpl final : public AFS::Service {
       cout << errno << endl;
       //return error status on failure
       reply->set_status(-errno);
-	    return Status::OK;
+	    return Status::OK; 
     }
 
     //Send File Attributes Data
