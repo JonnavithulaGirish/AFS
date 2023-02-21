@@ -25,6 +25,9 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <time.h>
+#include <chrono>
+#include <errno.h>
+#include <errno.h>
 
 #ifdef BAZEL_BUILD
 #include "examples/protos/helloworld.grpc.pb.h"
@@ -43,6 +46,8 @@ using FS::OpenRequest;
 using FS::OpenResponse;
 using FS::CloseRequest;
 using FS::CloseResponse;
+using FS::MkdirRequest;
+using FS::MkdirResponse;
 using namespace std;
 
 string serverBaseDir("/home/girish/serverfs/");
@@ -57,11 +62,12 @@ class AfsServiceImpl final : public AFS::Service {
     struct stat buf;
 
     //Get File Attributes
-    int ret= lstat(path.c_str(), &buf);
+    int ret = lstat(path.c_str(), &buf);
     if ( ret == -1)
     {
+      cout << errno << endl;
       //return error status on failure
-      reply->set_status(-1);
+      reply->set_status(-errno);
 	    return Status::OK;
     }
 
@@ -120,8 +126,9 @@ class AfsServiceImpl final : public AFS::Service {
     string path = serverBaseDir + request->path();
     std::cout<< "Close Got Called"<< path << std::endl;
 
-    time_t seconds = time (NULL);
-    string tempPath(path + std::to_string(seconds));
+    //time_t seconds = time (NULL);
+    uint64_t microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    string tempPath(path + std::to_string(microseconds_since_epoch));
     //Open File 
     int fd = open(tempPath.c_str(), O_CREAT | O_RDWR, 0777);
     if (fd == -1) {
@@ -149,6 +156,22 @@ class AfsServiceImpl final : public AFS::Service {
     //Send File Data
     reply->set_status(1);
     
+    return Status::OK;
+  }
+
+  Status Mkdir(ServerContext* context, const MkdirRequest* request, MkdirResponse* response) override
+  {
+    string path = serverBaseDir + request->path();
+    std::cout<< "Mkdir Got Called"<< path << std::endl;
+    int ret = mkdir(path.c_str(), request->mode());
+
+    if (ret == 0 || (ret == -1 && errno == EEXIST))
+    {
+      response->set_status(0);
+      return Status::OK;
+    }
+
+    response->set_status(-1);
     return Status::OK;
   }
 };

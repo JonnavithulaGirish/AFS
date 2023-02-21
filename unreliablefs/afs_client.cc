@@ -45,6 +45,8 @@ using FS::OpenRequest;
 using FS::OpenResponse;
 using FS::CloseRequest;
 using FS::CloseResponse;
+using FS::MkdirRequest;
+using FS::MkdirResponse;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -88,7 +90,7 @@ private:
   AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
   {
      m_mountPoint= mountPoint;
-     m_cacheDir="/home/girish/afscache/";
+     m_cacheDir="/home/araghavan/cs739/cache/";
     //m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
     //m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
   }
@@ -125,7 +127,7 @@ public:
     if (status.ok() && reply.status() == 1)
     {
       memcpy((char *)buf, reply.statbuf().c_str(), sizeof(struct stat));
-      return 1;
+      return 0;
     }
     else
     {
@@ -242,12 +244,40 @@ public:
     Status status = stub_->Close(&context, request, &reply);
       
     if (status.ok() && reply.status() == 1){
-      return 1;
+      return 0;
     }
     else{
         cout << "Some Error on AfsOpen()" <<endl;
         cout << status.error_code() << ": " << status.error_message() << std::endl;
         return -1;
+    }
+  }
+
+  int Mkdir(string path, int flags)
+  {
+    cout << "Mkdir called @path " << path << endl;
+    MkdirRequest request;
+    MkdirResponse reply;
+    ClientContext context;
+
+    path = removeMountPointPrefix(path);
+    request.set_path(path);
+
+    //Trigger RPC Call for GetAttr
+    Status status = stub_->Mkdir(&context, request, &reply);
+
+
+    //On Response received
+    if (status.ok())
+    {
+      cout << "Mkdir status ok " << reply.status() << endl;
+      return (int)reply.status();
+    }
+    else
+    {
+      cout << "Mkdir status not ok :/" << endl;
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return -1;
     }
   }
 };
@@ -271,4 +301,10 @@ extern "C" int afsClose(int fh)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
   return afsClient->Close(fh);
+}
+
+extern "C" int afsMkdir(const char* path, int flags)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Mkdir(string(path), flags);  
 }
