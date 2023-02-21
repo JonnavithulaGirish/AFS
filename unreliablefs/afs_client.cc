@@ -45,6 +45,14 @@ using FS::OpenRequest;
 using FS::OpenResponse;
 using FS::CloseRequest;
 using FS::CloseResponse;
+using FS::MkdirRequest;
+using FS::MkdirResponse;
+using FS::OpendirRequest;
+using FS::OpendirResponse;
+using FS::RmdirRequest;
+using FS::RmdirResponse;
+using FS::ReleasedirRequest;
+using FS::ReleasedirResponse;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -129,6 +137,9 @@ public:
     }
     else
     {
+      if(reply.status() !=1)
+        errno = reply.status();
+      cout << "Error on GetAttr() with errno :: "<< errno << endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
     }
@@ -148,7 +159,7 @@ public:
   {
     path = removeMountPointPrefix(path);
     string absoluteCachePath = m_cacheDir + sha256(path);
-    int fd = open(absoluteCachePath.c_str(), O_RDONLY);
+    int fd = open(absoluteCachePath.c_str(), flags);
     if (fd != -1)
     {
       // file in local cache, check if stale
@@ -178,11 +189,11 @@ public:
     request.set_path(path);
     request.set_flags(flags);
     Status status = stub_->Open(&context, request, &reply);
-    cout << "calling Open with the following path :: " << request.path()<< endl;
+    //cout << "calling Open with the following path :: " << request.path()<< endl;
     if (status.ok() && reply.status() == 1)
     {
       //Save the data in a new file and return file descriptor
-      int fd1 = open(absoluteCachePath.c_str(), O_WRONLY| O_CREAT,0777);
+      int fd1 = open(absoluteCachePath.c_str(), flags | O_CREAT,0777);
       if (fd1 == -1)
       {
         return -errno;
@@ -194,11 +205,12 @@ public:
       }
       fsync(fd1);
       fileMap[fd1] = path;
-      cout << "created file on client with the following name :: " << absoluteCachePath << endl;
+      //cout << "created file on client with the following name :: " << absoluteCachePath << endl;
       return fd1;
     }
     else
     {
+      // need to update errno:: GJ
       cout << "Some Error on AfsOpen()" <<endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
@@ -233,21 +245,147 @@ public:
       //return error status on failure
       return -1;
     }
-    cout << "file reading is complete on client :: "<< buf <<endl;
+    //cout << "file reading is complete on client :: "<< buf <<endl;
     //Send File Data
     request.set_path(serverPath);
     request.set_filedata(buf, statBuf.st_size);
-    cout << "Calling AfsClose with the following serverPath :: "<< request.path() <<endl;
-    std::cout<<  request.filedata()<< " is being sent" << std::endl;
+    //cout << "Calling AfsClose with the following serverPath :: "<< request.path() <<endl;
+    //std::cout<<  request.filedata()<< " is being sent" << std::endl;
     Status status = stub_->Close(&context, request, &reply);
       
     if (status.ok() && reply.status() == 1){
-      return 1;
+      return 0;
     }
     else{
-        cout << "Some Error on AfsOpen()" <<endl;
+        // need to update errno:: GJ
+        cout << "Some Error on AfsClose()" <<endl;
         cout << status.error_code() << ": " << status.error_message() << std::endl;
         return -1;
+    }
+  }
+
+
+  int Mkdir(string path, int flags)
+  {
+    cout << "Mkdir called @path " << path << endl;
+    MkdirRequest request;
+    MkdirResponse reply;
+    ClientContext context;
+
+    path = removeMountPointPrefix(path);
+    request.set_path(path);
+
+    //Trigger RPC Call for Mkdir
+    Status status = stub_->Mkdir(&context, request, &reply);
+
+
+    //On Response received
+    if (status.ok() && reply.status() == 1)
+    {
+      cout << "Mkdir status ok " << reply.status() << endl;
+      return (int)reply.status();
+    }
+    else
+    {
+      if(reply.status() !=1)
+        errno = reply.status();
+      cout << "Mkdir status not ok :/" << endl;
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return -1;
+    }
+  }
+
+
+  int Rmdir(string path)
+  {
+    cout << "Rmdir called @path " << path << endl;
+    RmdirRequest request;
+    RmdirResponse reply;
+    ClientContext context;
+
+    path = removeMountPointPrefix(path);
+    request.set_path(path);
+
+    //Trigger RPC Call for Rmdir
+    Status status = stub_->Rmdir(&context, request, &reply);
+
+
+    //On Response received
+    if (status.ok() && reply.status() == 1)
+    {
+      cout << "Rmdir status ok " << reply.status() << endl;
+      return (int)reply.status();
+    }
+    else
+    {
+      if(reply.status() !=1)
+        errno = reply.status();
+      cout << "Rmdir status not ok :/" << endl;
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return -1;
+    }
+  }
+
+
+  int64_t Opendir(string path)
+  {
+    cout << "Opendir called @path " << path << endl;
+    OpendirRequest request;
+    OpendirResponse reply;
+    ClientContext context;
+
+    path = removeMountPointPrefix(path);
+    cout << "Opendir updated @path " << path << endl;
+    request.set_path(path);
+
+    //Trigger RPC Call for Opendir
+    Status status = stub_->Opendir(&context, request, &reply);
+
+
+    //On Response received
+    if (status.ok() && reply.status() == 1)
+    {
+      cout << "Opendir status ok " << reply.status() << endl;
+      return reply.fh();
+    }
+    else
+    {
+      if(reply.status() !=1)
+        errno = reply.status();
+      cout << "Opendir status not ok :/" << endl;
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return -1;
+    }
+  }
+
+
+  int64_t Releasedir(int64_t fh)
+  {
+    cout << "Releasedir called @path " << fh << endl;
+    ReleasedirRequest request;
+    ReleasedirResponse reply;
+    ClientContext context;
+
+    
+    request.set_fh(fh);
+
+    //Trigger RPC Call for Opendir
+    Status status = stub_->Releasedir(&context, request, &reply);
+
+
+    //On Response received
+    if (status.ok() && reply.status() == 1)
+    {
+      cout << "Releasedir status ok " << reply.status() << endl;
+      return reply.status();
+    }
+    else
+    {
+      if(reply.status() !=1)
+        errno = reply.status();
+      cout << "Releasedir status not ok :/" << endl;
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return -1;
     }
   }
 };
@@ -271,4 +409,28 @@ extern "C" int afsClose(int fh)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
   return afsClient->Close(fh);
+}
+
+extern "C" int afsMkdir(const char* path, int flags)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Mkdir(string(path), flags);  
+}
+
+extern "C" int afsRmdir(const char* path)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Rmdir(string(path));  
+}
+
+extern "C" int64_t afsOpendir(const char* path)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Opendir(string(path));  
+}
+
+extern "C" int64_t afsReleasedir(int64_t fh)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Releasedir(fh);  
 }

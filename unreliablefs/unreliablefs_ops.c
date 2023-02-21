@@ -76,6 +76,7 @@ extern int error_inject(const char* path, fuse_op operation);
 
 int unreliable_lstat(const char *path, struct stat *buf)
 {
+    printf("In unreliable lstat \n");
     int ret = error_inject(path, OP_LSTAT);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -97,6 +98,7 @@ int unreliable_lstat(const char *path, struct stat *buf)
 
 int unreliable_getattr(const char *path, struct stat *buf)
 {
+    printf("In unreliable getattr  \n");
     int ret = error_inject(path, OP_GETATTR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -110,6 +112,7 @@ int unreliable_getattr(const char *path, struct stat *buf)
     
     memset(buf, 0, sizeof(struct stat));
     if(afsGetAttr(path,buf) == -1){
+        //printf("errno :: %d\n", -errno);
         return -errno;
     }
 
@@ -118,6 +121,7 @@ int unreliable_getattr(const char *path, struct stat *buf)
 
 int unreliable_readlink(const char *path, char *buf, size_t bufsiz)
 {
+    printf("In unreliable readlink \n");
     int ret = error_inject(path, OP_READLINK);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -136,6 +140,7 @@ int unreliable_readlink(const char *path, char *buf, size_t bufsiz)
 
 int unreliable_mknod(const char *path, mode_t mode, dev_t dev)
 {
+    printf("In unreliable mknod \n");
     int ret = error_inject(path, OP_MKNOD);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -153,6 +158,7 @@ int unreliable_mknod(const char *path, mode_t mode, dev_t dev)
 
 int unreliable_mkdir(const char *path, mode_t mode)
 {
+    printf("In unreliable mkdir \n");
     int ret = error_inject(path, OP_MKDIR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -160,7 +166,7 @@ int unreliable_mkdir(const char *path, mode_t mode)
         return ret;
     }
 
-    ret = mkdir(path, mode);
+    ret = afsMkdir(path, mode);
     if (ret == -1) {
         return -errno;
     }
@@ -170,6 +176,7 @@ int unreliable_mkdir(const char *path, mode_t mode)
 
 int unreliable_unlink(const char *path)
 {
+    printf("In unreliable unlink \n");
     int ret = error_inject(path, OP_UNLINK);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -187,6 +194,7 @@ int unreliable_unlink(const char *path)
 
 int unreliable_rmdir(const char *path)
 {
+    printf("In unreliable rmdir \n");
     int ret = error_inject(path, OP_RMDIR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -194,7 +202,7 @@ int unreliable_rmdir(const char *path)
         return ret;
     }
 
-    ret = rmdir(path); 
+    ret = afsRmdir(path); 
     if (ret == -1) {
         return -errno;
     }
@@ -204,6 +212,7 @@ int unreliable_rmdir(const char *path)
 
 int unreliable_symlink(const char *target, const char *linkpath)
 {
+    printf("In unreliable symlink \n");
     int ret = error_inject(target, OP_SYMLINK);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -221,6 +230,7 @@ int unreliable_symlink(const char *target, const char *linkpath)
 
 int unreliable_rename(const char *oldpath, const char *newpath)
 {
+    printf("In unreliable rename \n");
     int ret = error_inject(oldpath, OP_RENAME);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -238,6 +248,7 @@ int unreliable_rename(const char *oldpath, const char *newpath)
 
 int unreliable_link(const char *oldpath, const char *newpath)
 {
+    printf("In unreliable link \n");
     int ret = error_inject(oldpath, OP_LINK);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -255,6 +266,7 @@ int unreliable_link(const char *oldpath, const char *newpath)
 
 int unreliable_chmod(const char *path, mode_t mode)
 {
+    printf("In unreliable chmod \n");
     int ret = error_inject(path, OP_CHMOD);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -272,6 +284,7 @@ int unreliable_chmod(const char *path, mode_t mode)
 
 int unreliable_chown(const char *path, uid_t owner, gid_t group)
 {
+    printf("In unreliable chown \n");
     int ret = error_inject(path, OP_CHOWN);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -289,6 +302,7 @@ int unreliable_chown(const char *path, uid_t owner, gid_t group)
 
 int unreliable_truncate(const char *path, off_t length)
 {
+    printf("In unreliable truncate \n");
     int ret = error_inject(path, OP_TRUNCATE);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -306,6 +320,7 @@ int unreliable_truncate(const char *path, off_t length)
 
 int unreliable_open(const char *path, struct fuse_file_info *fi)
 {   
+    printf("In unreliable open \n");
     int ret = error_inject(path, OP_OPEN);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -329,7 +344,8 @@ int unreliable_open(const char *path, struct fuse_file_info *fi)
 int unreliable_read(const char *path, char *buf, size_t size, off_t offset,
                     struct fuse_file_info *fi)
 {
-    printf("read triggered\n");
+    printf("In unreliable read \n");
+    //printf("read triggered with path :: %s\n", path);
     int ret = error_inject(path, OP_READ);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -339,22 +355,23 @@ int unreliable_read(const char *path, char *buf, size_t size, off_t offset,
 
     int fd;
 
-    if (fi == NULL) {
+    //if (fi == NULL) {
 	fd = afsOpen(path, O_RDONLY);
-    printf("filedesciptor on client is :: %d\n",fd);
-    } else {
-	fd = fi->fh;
-    printf("filedesciptor on client is +ve flow :: %d\n",fd);
-    }
+    //printf("filedesciptor on client is :: %d\n",fd);
+    //printf("filedescriptor check :: %ld\n",fi->fh);
+    //} else {
+	//fd = fi->fh;
+    //printf("filedesciptor on client is +ve flow :: %d\n",fd);
+    //}
 
     if (fd == -1) {
-        printf("yo error");
+        //printf("yo error");
 	    return -errno;
     }
 
     ret = pread(fd, buf, size, offset);
     if (ret == -1) {
-        printf("yo error 2 %d\n",fd);
+        //printf("yo error 2 %d\n",fd);
         ret = -errno;
     }
 
@@ -368,6 +385,8 @@ int unreliable_read(const char *path, char *buf, size_t size, off_t offset,
 int unreliable_write(const char *path, const char *buf, size_t size,
                      off_t offset, struct fuse_file_info *fi)
 {
+    printf("In unreliable write \n");
+    //printf("write triggered with path :: %s\n", path);
     int ret = error_inject(path, OP_WRITE);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -376,12 +395,14 @@ int unreliable_write(const char *path, const char *buf, size_t size,
     }
 
     int fd;
-    (void) fi;
-    if(fi == NULL) {
+    //(void) fi;
+    //if(fi == NULL) {
 	fd = afsOpen(path, O_WRONLY);
-    } else {
-	fd = fi->fh;
-    }
+    //printf("filedesciptor on client is :: %d\n",fd);
+    //printf("filedescriptor check :: %ld\n",fi->fh);
+    //} else {
+	//fd = fi->fh;
+    //}
 
     if (fd == -1) {
 	return -errno;
@@ -389,18 +410,20 @@ int unreliable_write(const char *path, const char *buf, size_t size,
 
     ret = pwrite(fd, buf, size, offset);
     if (ret == -1) {
+        //printf("write error");
         ret = -errno;
     }
 
     if(fi == NULL) {
         close(fd);
     }
-
+    //printf("write successfull");
     return ret;
 }
 
 int unreliable_statfs(const char *path, struct statvfs *buf)
 {
+    printf("In unreliable statfs \n");
     int ret = error_inject(path, OP_STATFS);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -418,6 +441,7 @@ int unreliable_statfs(const char *path, struct statvfs *buf)
 
 int unreliable_flush(const char *path, struct fuse_file_info *fi)
 {
+    printf("In unreliable flush \n");
     int ret = error_inject(path, OP_FLUSH);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -429,8 +453,9 @@ int unreliable_flush(const char *path, struct fuse_file_info *fi)
     // if (ret == -1) {
     //     return -errno;
     // }
+    //printf("unreliable_flush\n");
+    ret = afsClose(fi->fh);
 
-    ret = afsClose(dup(fi->fh));
     if (ret == -1) {
         return -errno;
     }
@@ -440,6 +465,7 @@ int unreliable_flush(const char *path, struct fuse_file_info *fi)
 
 int unreliable_release(const char *path, struct fuse_file_info *fi)
 {
+    printf("In unreliable release \n");
     int ret = error_inject(path, OP_RELEASE);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -451,9 +477,10 @@ int unreliable_release(const char *path, struct fuse_file_info *fi)
     // if (ret == -1) {
     //     return -errno;
     // }
-
+    //printf("unreliable_release\n");
     ret = afsClose(fi->fh);
     if (ret == -1) {
+        //printf("errno %d\n", errno);
         return -errno;
     }
 
@@ -462,6 +489,7 @@ int unreliable_release(const char *path, struct fuse_file_info *fi)
 
 int unreliable_fsync(const char *path, int datasync, struct fuse_file_info *fi)
 {
+    printf("In unreliable fsync \n");
     int ret = error_inject(path, OP_FSYNC);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -574,6 +602,7 @@ int unreliable_removexattr(const char *path, const char *name)
 
 int unreliable_opendir(const char *path, struct fuse_file_info *fi)
 {
+    printf("In unreliable opendir \n");
     int ret = error_inject(path, OP_OPENDIR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -581,12 +610,16 @@ int unreliable_opendir(const char *path, struct fuse_file_info *fi)
         return ret;
     }
 
-    DIR *dir = opendir(path);
-
+    // DIR *dir = opendir(path);
+    // if (!dir) {
+    //     return -errno;
+    // }
+    // fi->fh = (int64_t) dir;
+    int64_t dir= afsOpendir(path);
     if (!dir) {
         return -errno;
     }
-    fi->fh = (int64_t) dir;
+    fi->fh = dir;
 
     return 0;    
 }
@@ -594,6 +627,7 @@ int unreliable_opendir(const char *path, struct fuse_file_info *fi)
 int unreliable_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                        off_t offset, struct fuse_file_info *fi)
 {
+    printf("In unreliable readdir \n");
     int ret = error_inject(path, OP_READDIR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -625,6 +659,7 @@ int unreliable_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 int unreliable_releasedir(const char *path, struct fuse_file_info *fi)
 {
+    printf("In unreliable releasedir \n");
     int ret = error_inject(path, OP_RELEASEDIR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -632,9 +667,13 @@ int unreliable_releasedir(const char *path, struct fuse_file_info *fi)
         return ret;
     }
 
-    DIR *dir = (DIR *) fi->fh;
+    //DIR *dir = (DIR *) fi->fh;
+    //ret = closedir(dir);
+    // if (ret == -1) {
+    //     return -errno;
+    // }
 
-    ret = closedir(dir);
+    ret = afsReleasedir(fi->fh);
     if (ret == -1) {
         return -errno;
     }
@@ -644,6 +683,7 @@ int unreliable_releasedir(const char *path, struct fuse_file_info *fi)
 
 int unreliable_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi)
 {
+    printf("In unreliable fsyncdir \n");
     int ret = error_inject(path, OP_FSYNCDIR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -684,6 +724,8 @@ void unreliable_destroy(void *private_data)
 
 int unreliable_access(const char *path, int mode)
 {
+    printf("In unreliable access \n");
+
     int ret = error_inject(path, OP_ACCESS);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -702,6 +744,7 @@ int unreliable_access(const char *path, int mode)
 int unreliable_create(const char *path, mode_t mode,
                       struct fuse_file_info *fi)
 {
+    printf("In unreliable create \n");
     int ret = error_inject(path, OP_CREAT);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -721,6 +764,7 @@ int unreliable_create(const char *path, mode_t mode,
 int unreliable_ftruncate(const char *path, off_t length,
                          struct fuse_file_info *fi)
 {
+    printf("In unreliable ftruncate \n");
     int ret = error_inject(path, OP_FTRUNCATE);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -739,6 +783,7 @@ int unreliable_ftruncate(const char *path, off_t length,
 int unreliable_fgetattr(const char *path, struct stat *buf,
                         struct fuse_file_info *fi)
 {
+    printf("In unreliable fgetattr \n");
     int ret = error_inject(path, OP_FGETATTR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -757,6 +802,7 @@ int unreliable_fgetattr(const char *path, struct stat *buf,
 int unreliable_lock(const char *path, struct fuse_file_info *fi, int cmd,
                     struct flock *fl)
 {
+    printf("In unreliable lock \n");
     int ret = error_inject(path, OP_LOCK);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -777,6 +823,7 @@ int unreliable_ioctl(const char *path, int cmd, void *arg,
                      struct fuse_file_info *fi,
                      unsigned int flags, void *data)
 {
+    printf("In unreliable ioctl \n");
     int ret = error_inject(path, OP_IOCTL);
     if (ret == -ERRNO_NOOP) {
         return 0;

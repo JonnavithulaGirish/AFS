@@ -25,6 +25,11 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <time.h>
+#include <chrono>
+#include <errno.h>
+#include <dirent.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
 
 #ifdef BAZEL_BUILD
 #include "examples/protos/helloworld.grpc.pb.h"
@@ -43,6 +48,14 @@ using FS::OpenRequest;
 using FS::OpenResponse;
 using FS::CloseRequest;
 using FS::CloseResponse;
+using FS::MkdirRequest;
+using FS::MkdirResponse;
+using FS::OpendirRequest;
+using FS::OpendirResponse;
+using FS::RmdirRequest;
+using FS::RmdirResponse;
+using FS::ReleasedirRequest;
+using FS::ReleasedirResponse;
 using namespace std;
 
 string serverBaseDir("/home/girish/serverfs/");
@@ -53,7 +66,7 @@ class AfsServiceImpl final : public AFS::Service {
                   GetAttrResponse* reply) override {
 
     string path = serverBaseDir + request->path();
-    std::cout<< "GetAttr Got Called :: "<< path <<std::endl;
+    std::cout<< "GetAttr Got Called with path:: "<< path <<std::endl;
     struct stat buf;
 
     //Get File Attributes
@@ -61,7 +74,7 @@ class AfsServiceImpl final : public AFS::Service {
     if ( ret == -1)
     {
       //return error status on failure
-      reply->set_status(-1);
+      reply->set_status(errno);
 	    return Status::OK;
     }
 
@@ -75,7 +88,7 @@ class AfsServiceImpl final : public AFS::Service {
                   OpenResponse* reply) override {
     
     string path = serverBaseDir + request->path();
-    std::cout<< "Open Got Called"<< path << std::endl;
+    std::cout<< "Open Got Called with path:: "<< path << std::endl;
 
     //Open File 
     int fd = open(path.c_str(), request->flags());
@@ -118,37 +131,113 @@ class AfsServiceImpl final : public AFS::Service {
                   CloseResponse* reply) override {
     
     string path = serverBaseDir + request->path();
-    std::cout<< "Close Got Called"<< path << std::endl;
+    std::cout<< "Close Got Called with path:: "<< path << std::endl;
 
-    time_t seconds = time (NULL);
-    string tempPath(path + std::to_string(seconds));
+    auto microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    //time_t seconds = time (NULL);
+    string tempPath(path + std::to_string(microseconds_since_epoch));
+    //cout << "Creating temp file " << tempPath << endl; 
     //Open File 
     int fd = open(tempPath.c_str(), O_CREAT | O_RDWR, 0777);
+    //cout << "Creating temp file status :: " << fd << endl; 
     if (fd == -1) {
       //return error status on failure
       reply->set_status(-1);
 	    return Status::OK;
     }
 
+    //cout << "Writing the following data::  " << request->filedata() << endl; 
     //Write File
     int ret = pwrite(fd, request->filedata().c_str(), request->filedata().size(), 0);
+    //cout << "write status::  " << ret << endl; 
     if (ret == -1) {
       //return error status on failure
       reply->set_status(-1);
 	    return Status::OK;
     }
+    fsync(fd);
 
+    //cout << "renaming the file::  " << path.c_str() << endl; 
     if(rename(tempPath.c_str(), path.c_str()) == -1){
       //return error status on failure
+      cout << errno << endl;
+      cout << "renaming failed " << endl; 
       reply->set_status(-1);
 	    return Status::OK;
     }
 
+    
     close(fd);
-
+    cout << "close successful " << endl; 
     //Send File Data
     reply->set_status(1);
     
+    return Status::OK;
+  }
+
+   Status Mkdir(ServerContext* context, const MkdirRequest* request, MkdirResponse* response) override
+  {
+    string path = serverBaseDir + request->path();
+    std::cout<< "Mkdir Got Called with path:: "<< path << std::endl;
+    int ret = mkdir(path.c_str(), request->mode());
+
+    if (ret == 0 || (ret == -1 && errno == EEXIST))
+    {
+      response->set_status(1);
+      return Status::OK;
+    }
+
+    response->set_status(errno);
+    return Status::OK;
+  }
+
+  Status Opendir(ServerContext* context, const OpendirRequest* request, OpendirResponse* response) override
+  {
+    string path = serverBaseDir + request->path();
+    std::cout<< "Opendir Got Called with path:: "<< path << std::endl;
+
+    DIR *dir = opendir(path.c_str());
+    if (!dir) {
+        response->set_status(errno);
+        return Status::OK;
+    }
+
+    int64_t val = (int64_t) dir;
+    std::cout<< "Opendir returning filehandle value:: "<< val << std::endl;
+    //std::cout<< "Opendir returning value original "<< dir << std::endl;
+
+    response->set_status(1);
+    response->set_fh(val);
+    return Status::OK;
+  }
+
+
+  Status Rmdir(ServerContext* context, const RmdirRequest* request, RmdirResponse* response) override
+  {
+    string path = serverBaseDir + request->path();
+    std::cout<< "RemoveDir Got Called with path:: "<< path << std::endl;
+    int ret = rmdir(path.c_str()); 
+    if (ret == -1) {
+        response->set_status(errno);
+        return Status::OK;
+    }
+
+    response->set_status(1);
+    return Status::OK;
+  }
+
+  Status Releasedir(ServerContext* context, const ReleasedirRequest* request, ReleasedirResponse* response) override
+  {
+    std::cout<< "Releasedir Got Called with filehandle:: "<< request->fh() << std::endl;
+
+    DIR *dir = (DIR *) request->fh();
+    int ret = closedir(dir);
+    if (ret == -1) {
+        response->set_status(errno);
+        return Status::OK;
+    }
+
+    response->set_status(1);
     return Status::OK;
   }
 };
