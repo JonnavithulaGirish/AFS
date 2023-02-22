@@ -108,7 +108,7 @@ private:
   AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
   {
      m_mountPoint= mountPoint;
-     m_cacheDir="/home/rishideepreddy/clientCache/";
+     m_cacheDir="/home/girish/afscache/";
     //m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
     //m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
   }
@@ -222,6 +222,8 @@ public:
     else
     {
       // need to update errno:: GJ
+      if(reply.errnum() != 1)
+        errno = reply.errnum();
       cout << "Some Error on AfsOpen()" <<endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
@@ -285,6 +287,7 @@ public:
 
     path = removeMountPointPrefix(path);
     request.set_path(path);
+    request.set_mode(flags);
 
     //Trigger RPC Call for Mkdir
     Status status = stub_->Mkdir(&context, request, &reply);

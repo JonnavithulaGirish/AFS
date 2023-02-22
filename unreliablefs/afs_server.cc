@@ -68,7 +68,7 @@ using FS::ReaddirResponse;
 
 using namespace std;
 
-string serverBaseDir("/home/rishideepreddy/serverFS/");
+string serverBaseDir("/home/girish/serverfs/");
 
 // Logic and data behind the server's behavior.
 class AfsServiceImpl final : public AFS::Service {
@@ -104,7 +104,7 @@ class AfsServiceImpl final : public AFS::Service {
     int fd = open(path.c_str(), request->flags());
     if (fd == -1) {
       //return error status on failure
-      reply->set_errnum(-1);
+      reply->set_errnum(errno);
 	    return Status::OK;
     }
 
@@ -114,7 +114,7 @@ class AfsServiceImpl final : public AFS::Service {
     if (ret == -1)
     {
       //return error status on failure
-      reply->set_errnum(-1);
+      reply->set_errnum(errno);
 	    return Status::OK;
     }
 
@@ -123,7 +123,7 @@ class AfsServiceImpl final : public AFS::Service {
     ret = pread(fd, buf, statBuf.st_size, 0);
     if (ret == -1) {
       //return error status on failure
-      reply->set_errnum(-1);
+      reply->set_errnum(errno);
 	    return Status::OK;
     }
 
@@ -152,7 +152,7 @@ class AfsServiceImpl final : public AFS::Service {
     //cout << "Creating temp file status :: " << fd << endl; 
     if (fd == -1) {
       //return error status on failure
-      reply->set_errnum(-1);
+      reply->set_errnum(errno);
 	    return Status::OK;
     }
 
@@ -162,7 +162,7 @@ class AfsServiceImpl final : public AFS::Service {
     //cout << "write status::  " << ret << endl; 
     if (ret == -1) {
       //return error status on failure
-      reply->set_errnum(-1);
+      reply->set_errnum(errno);
 	    return Status::OK;
     }
     fsync(fd);
@@ -170,9 +170,8 @@ class AfsServiceImpl final : public AFS::Service {
     //cout << "renaming the file::  " << path.c_str() << endl; 
     if(rename(tempPath.c_str(), path.c_str()) == -1){
       //return error status on failure
-      cout << errno << endl;
       cout << "renaming failed " << endl; 
-      reply->set_errnum(-1);
+      reply->set_errnum(errno);
 	    return Status::OK;
     }
 
