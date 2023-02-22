@@ -104,6 +104,7 @@ class AfsServiceImpl final : public AFS::Service {
     int fd = open(path.c_str(), request->flags());
     if (fd == -1) {
       //return error status on failure
+      cout<< "a" << endl;
       reply->set_errnum(errno);
 	    return Status::OK;
     }
@@ -113,6 +114,7 @@ class AfsServiceImpl final : public AFS::Service {
     int ret = lstat(path.c_str(), &statBuf);
     if (ret == -1)
     {
+      cout<< "b" << endl;
       //return error status on failure
       reply->set_errnum(errno);
 	    return Status::OK;
@@ -122,6 +124,7 @@ class AfsServiceImpl final : public AFS::Service {
     char *buf = new char[statBuf.st_size];
     ret = pread(fd, buf, statBuf.st_size, 0);
     if (ret == -1) {
+      cout<< "c" << endl;
       //return error status on failure
       reply->set_errnum(errno);
 	    return Status::OK;

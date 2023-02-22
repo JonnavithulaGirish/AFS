@@ -398,6 +398,7 @@ int unreliable_write(const char *path, const char *buf, size_t size,
     int fd;
     //(void) fi;
     //if(fi == NULL) {
+    printf("fd:: %ld\n", fi->fh);
 	fd = afsOpen(path, O_WRONLY);
     //printf("filedesciptor on client is :: %d\n",fd);
     //printf("filedescriptor check :: %ld\n",fi->fh);
@@ -479,11 +480,11 @@ int unreliable_release(const char *path, struct fuse_file_info *fi)
     //     return -errno;
     // }
     //printf("unreliable_release\n");
-    ret = afsClose(fi->fh);
-    if (ret == -1) {
-        //printf("errno %d\n", errno);
-        return -errno;
-    }
+    // ret = afsClose(fi->fh);
+    // if (ret == -1) {
+    //     //printf("errno %d\n", errno);
+    //     return -errno;
+    // }
 
     return 0;    
 }

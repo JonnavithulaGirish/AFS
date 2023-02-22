@@ -108,7 +108,7 @@ private:
   AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
   {
      m_mountPoint= mountPoint;
-     m_cacheDir="/home/araghavan/cs739/cache/";
+     m_cacheDir="/home/girish/afscache/";
     //m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
     //m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
   }
@@ -168,14 +168,17 @@ public:
 
   int Open(std::string path, int flags)
   {
+    cout<< "Open call with @Path:: " << path << endl;
     path = removeMountPointPrefix(path);
     string absoluteCachePath = m_cacheDir + sha256(path);
     int fd = open(absoluteCachePath.c_str(), flags);
     if (fd != -1)
     {
+      cout<< "Open found file in local @Path:: " << absoluteCachePath << endl;
       // file in local cache, check if stale
       struct stat statBuf, lstatBuf;
 
+      cout<< "Checking with Server GetAttr" << endl;
       // Call getAttr to check if local file data is not stale
       GetAttr(path, &statBuf);
       memset(&lstatBuf, 0, sizeof(struct stat));
@@ -186,8 +189,14 @@ public:
         return -errno;
       }
 
+      // cout<< "server time sec" << statBuf.st_mtim.tv_sec <<endl;
+      // cout<< "server time nsec" << statBuf.st_mtim.tv_nsec <<endl;
+      // cout<< "client time sec" << lstatBuf.st_mtim.tv_sec <<endl;
+      // cout<< "client time nsec" << lstatBuf.st_mtim.tv_nsec <<endl;
+
       // cache not stale
-      if ((statBuf.st_mtim.tv_sec < lstatBuf.st_mtim.tv_sec) || (statBuf.st_mtim.tv_sec == lstatBuf.st_mtim.tv_sec && statBuf.st_mtim.tv_nsec < lstatBuf.st_mtim.tv_nsec)){
+      if ((statBuf.st_mtim.tv_sec < lstatBuf.st_mtim.tv_sec) || (statBuf.st_mtim.tv_sec == lstatBuf.st_mtim.tv_sec && statBuf.st_mtim.tv_nsec <= lstatBuf.st_mtim.tv_nsec)){
+        cout<< "Using file in local cache with fd::"<< fd << endl;
         fileMap[fd] = path;
         return fd;
       }
@@ -199,23 +208,29 @@ public:
 
     request.set_path(path);
     request.set_flags(flags);
+    cout<< "Calling Server with Open @path:: "<< path << endl;
     Status status = stub_->Open(&context, request, &reply);
     //cout << "calling Open with the following path :: " << request.path()<< endl;
     if (status.ok() && reply.errnum() == 1)
     {
+      cout<< "Creating file in localcache @path:: "<< absoluteCachePath << endl;
       //Save the data in a new file and return file descriptor
       int fd1 = open(absoluteCachePath.c_str(), flags | O_CREAT,0777);
       if (fd1 == -1)
       {
+        cout<< "a" <<endl;
         return -errno;
       }
+      cout<< "writing to localcache @path:: "<< absoluteCachePath << endl;
       int ret = pwrite(fd1, reply.filedata().c_str(), reply.filedata().size(), 0);
       if (ret == -1)
       {
+        cout<< "b" <<endl;
         ret = -errno;
       }
       fsync(fd1);
       fileMap[fd1] = path;
+      cout<< "returning localcachefile fd:: "<< fd1 << endl;
       //cout << "created file on client with the following name :: " << absoluteCachePath << endl;
       return fd1;
     }
@@ -224,13 +239,14 @@ public:
       // need to update errno:: GJ
       if(reply.errnum() != 1)
         errno = reply.errnum();
-      cout << "Some Error on AfsOpen()" <<endl;
+      cout << "Some Error on AfsOpen()"<< errno <<endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
     }
   }
 
   int Close(int fh){
+      cout<< "Closinf file with @fh:: "<< fh << endl;
     CloseRequest request;
     CloseResponse reply;
     ClientContext context;
@@ -241,7 +257,8 @@ public:
         return -1;
     else
         serverPath = fileMap[fh];
-    
+    cout<< "Found file in localcache @path:: "<< serverPath << endl;
+  
     string absoluteCachePath = m_cacheDir + sha256(serverPath);
     //Get File Attributes
     struct stat statBuf;
@@ -262,8 +279,9 @@ public:
     //Send File Data
     request.set_path(serverPath);
     request.set_filedata(buf, statBuf.st_size);
-    //cout << "Calling AfsClose with the following serverPath :: "<< request.path() <<endl;
-    //std::cout<<  request.filedata()<< " is being sent" << std::endl;
+    cout << "Calling AfsClose with the following serverPath :: "<< request.path() <<endl;
+    std::cout<<  request.filedata()<< " is being sent" << std::endl;
+
     Status status = stub_->Close(&context, request, &reply);
       
     if (status.ok() && reply.errnum() == 1){
