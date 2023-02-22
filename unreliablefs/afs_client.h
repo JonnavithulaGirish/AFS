@@ -10,3 +10,4 @@ int64_t afsOpendir(const char* path);
 int afsReleasedir(int64_t fh);
 int afsTruncate(const char* path, int len);
 int afsMknod(const char* path, mode_t len, dev_t dev);
+int64_t afsReaddir(int64_t dp, int *sz, char ***dnames);

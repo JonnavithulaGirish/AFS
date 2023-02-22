@@ -61,6 +61,8 @@ using FS::TruncateRequest;
 using FS::TruncateResponse;
 using FS::MknodRequest;
 using FS::MknodResponse;
+using FS::ReaddirRequest;
+using FS::ReaddirResponse;
 
 using namespace std;
 
@@ -217,6 +219,37 @@ class AfsServiceImpl final : public AFS::Service {
     return Status::OK;
   }
 
+  Status Readdir(ServerContext* context, const ReaddirRequest* request, ReaddirResponse* response) override
+  {
+    std::cout<< "Readdir Got Called with dir ptr:: "<< request->dp() << std::endl;
+    
+    vector<struct stat> vst;
+    vector<string> vdnames;
+    struct dirent *de;
+
+    while ((de = readdir((DIR *)request->dp())) != nullptr) {
+        struct stat st;
+        memset(&st, 0, sizeof(st));
+        st.st_ino = de->d_ino;
+        st.st_mode = de->d_type << 12;
+        vdnames.push_back(string(de->d_name));
+        vst.push_back(st);
+    }
+    response->set_numentries(vst.size());
+    
+    struct stat ast[vst.size()];
+    char adnames[vst.size()][256];
+    for (int i = 0; i < vst.size(); i++)
+    {
+      memcpy((char *)&ast[i], (char *)&vst[i], sizeof(struct stat));
+      memcpy((char *)&adnames[i], vdnames[i].c_str(), vdnames[i].size());
+      adnames[i][vdnames[i].size()] = 0;
+    }
+
+    response->set_dirent((char *)ast, vst.size()*sizeof(struct stat));
+    response->set_dnames((char *)adnames, vdnames.size()*256);
+    return Status::OK;
+  }
 
   Status Rmdir(ServerContext* context, const RmdirRequest* request, RmdirResponse* response) override
   {
