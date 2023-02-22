@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <sys/ioctl.h>
 #include <sys/file.h>
@@ -615,7 +616,7 @@ int unreliable_opendir(const char *path, struct fuse_file_info *fi)
     //     return -errno;
     // }
     // fi->fh = (int64_t) dir;
-    int64_t dir= afsOpendir(path);
+    uint64_t dir= afsOpendir(path);
     if (!dir) {
         return -errno;
     }
@@ -635,24 +636,38 @@ int unreliable_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         return ret;
     }
 
-    DIR *dp = opendir(path);
-    if (dp == NULL) {
+    uint64_t dp = afsOpendir(path);
+    if (dp == 0) {
 	return -errno;
     }
-    struct dirent *de;
+    // struct dirent *de;
 
     (void) offset;
     (void) fi;
+    
+    int sz = 0;
+    char **dnames = NULL;
+    struct stat* de = (struct stat *)afsReaddir(dp, &sz, &dnames);
 
-    while ((de = readdir(dp)) != NULL) {
-        struct stat st;
-        memset(&st, 0, sizeof(st));
-        st.st_ino = de->d_ino;
-        st.st_mode = de->d_type << 12;
-        if (filler(buf, de->d_name, &st, 0))
+    for (int i = 0; i < sz; i++)
+    {
+        printf("%s\n", dnames[i]);
+        if (filler(buf, *(dnames+i), de+i, 0))
             break;
     }
-    closedir(dp);
+    printf("f\n");
+    // while ((de = readdir((DIR *)dp)) != NULL) {
+    //     struct stat st;
+    //     memset(&st, 0, sizeof(st));
+    //     st.st_ino = de->d_ino;
+    //     st.st_mode = de->d_type << 12;
+    //     if (filler(buf, de->d_name, &st, 0))
+    //         break;
+    // }
+    afsReleasedir(dp);
+    free(dnames);
+    free(de);       // TODO: Free individual strings
+    printf("g\n");
 
     return 0;
 }

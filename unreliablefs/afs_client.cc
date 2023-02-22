@@ -59,6 +59,8 @@ using FS::TruncateRequest;
 using FS::TruncateResponse;
 using FS::MknodRequest;
 using FS::MknodResponse;
+using FS::ReaddirRequest;
+using FS::ReaddirResponse;
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -95,6 +97,7 @@ private:
   string m_mountPoint;
   string m_cacheDir;
   std::unordered_map <int,std::string> fileMap;
+  //std::unordered_map <uint64_t, std::string> dirMap;
 
   AfsClientSingleton()
   {
@@ -124,6 +127,15 @@ public:
       return instancePtr;
   }
 
+    string removeMountPointPrefix(string inputPath)
+  {
+   
+    string s_inputPath = filesystem::absolute(filesystem::path(inputPath)).string();
+    if(s_inputPath.find(m_cacheDir) != string::npos){
+      return s_inputPath.substr(m_cacheDir.size());
+    }
+    return inputPath;
+  }
 
   int GetAttr(std::string path, struct stat *buf)
   {
@@ -152,16 +164,6 @@ public:
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
     }
-  }
-
-  string removeMountPointPrefix(string inputPath)
-  {
-   
-    string s_inputPath = filesystem::absolute(filesystem::path(inputPath)).string();
-    if(s_inputPath.find(m_cacheDir) != string::npos){
-      return s_inputPath.substr(m_cacheDir.size());
-    }
-    return inputPath;
   }
 
   int Open(std::string path, int flags)
@@ -367,11 +369,59 @@ public:
     }
   }
 
-
-
-  int64_t Releasedir(int64_t fh)
+  int64_t Readdir(int64_t dp, int *sz, char ***dnames)
   {
-    cout << "Releasedir called @path " << fh << endl;
+    cout << "Readdir called @dirptr " << dp << endl;
+    ReaddirRequest request;
+    ReaddirResponse reply;
+    ClientContext context;
+
+    request.set_dp(dp);
+
+    Status status = stub_->Readdir(&context, request, &reply);
+
+    //On Response received
+    if (status.ok())
+    {
+      cout << "Readdir status ok " << endl;
+      if (reply.numentries() == 0)
+        return 0;
+
+      cout << "a" << endl;
+      *sz = reply.numentries();
+
+      struct stat* ast = new struct stat[reply.numentries()];
+      struct stat* de = (struct stat*)reply.dirent().c_str();
+      
+      cout << "b" << endl;
+      *dnames = new char*[reply.numentries()];
+      const char *tmp = reply.dnames().c_str();
+
+      for (int i = 0; i < reply.numentries(); i++)
+      {
+        cout << "c" << endl;
+        memcpy((char *)&ast[i], (char *)(de+i), sizeof(struct stat));
+        char *str = new char[256];
+        memcpy(str, tmp+i*256, 256);
+        cout << str << endl;
+        *(*dnames+i) = str;
+        cout << *(*dnames+i) << endl;
+      }
+      cout << 'd' << endl;
+      
+      return (int64_t)ast;
+    }
+    else
+    {
+      cout << "Readdir status not ok :/" << endl;
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return 0;
+    }
+  }
+
+  int Releasedir(int64_t fh)
+  {
+    cout << "Releasedir called @file_handle " << fh << endl;
     ReleasedirRequest request;
     ReleasedirResponse reply;
     ClientContext context;
@@ -381,7 +431,6 @@ public:
 
     //Trigger RPC Call for Opendir
     Status status = stub_->Releasedir(&context, request, &reply);
-
 
     //On Response received
     if (status.ok() && reply.errnum() == 1)
@@ -534,7 +583,7 @@ extern "C" int64_t afsOpendir(const char* path)
   return afsClient->Opendir(string(path));  
 }
 
-extern "C" int64_t afsReleasedir(int64_t fh)
+extern "C" int afsReleasedir(int64_t fh)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
   return afsClient->Releasedir(fh);  
@@ -556,4 +605,10 @@ extern "C" int64_t afsRename(const char* oldPath, const char* newPath)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
   return afsClient->Rename(string(oldPath),string(newPath));  
+}
+
+extern "C" int afsReaddir(int64_t dp, int *sz, char ***dnames)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Readdir(dp, sz, dnames);
 }

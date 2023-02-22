@@ -11,19 +11,22 @@ service AFS {
   rpc GetAttr (GetAttrRequest) returns (GetAttrResponse) {}
   rpc Open (OpenRequest) returns (OpenResponse) {}
   rpc Close (CloseRequest) returns (CloseResponse){}
+  rpc Truncate(TruncateRequest) returns (TruncateResponse) {}
   rpc Mkdir (MkdirRequest) returns (MkdirResponse) {}
   rpc Rmdir (RmdirRequest) returns (RmdirResponse) {}
   rpc Opendir (OpendirRequest) returns (OpendirResponse) {}
   rpc Releasedir (ReleasedirRequest) returns (ReleasedirResponse) {}
+  rpc Readdir (ReaddirRequest) returns (ReaddirResponse) {}
+  rpc Mknod (MknodRequest) returns (MknodResponse) {}
   rpc Rename (RenameRequest) returns (RenameResponse) {}
 }
 
 message ReleasedirRequest {
-  int64 fh = 1;
+  uint64 fh = 1;
 }
 
 message ReleasedirResponse {
-  int32 status = 1;
+  int32 errnum = 1;
 }
 
 message OpendirRequest {
@@ -31,8 +34,8 @@ message OpendirRequest {
 }
 
 message OpendirResponse {
-  int32 status = 1;
-  int64 fh = 2;
+  int32 errnum = 1;
+  uint64 fh = 2;
 
 }
 
@@ -41,7 +44,7 @@ message RmdirRequest {
 }
 
 message RmdirResponse {
-  int32 status = 1;
+  int32 errnum = 1;
 }
 
 message MkdirRequest {
@@ -50,7 +53,7 @@ message MkdirRequest {
 }
 
 message MkdirResponse {
-  int32 status = 1;
+  int32 errnum = 1;
 }
 
 message CloseRequest {
@@ -59,7 +62,7 @@ message CloseRequest {
 }
 
 message CloseResponse {
-  int32 status = 1;
+  int32 errnum = 1;
 }
 
 
@@ -69,7 +72,7 @@ message OpenRequest {
 }
 
 message OpenResponse {
-  int32 status = 1;
+  int32 errnum = 1;
   bytes fileData = 2; 
 }
 
@@ -78,7 +81,7 @@ message GetAttrRequest {
 }
 
 message GetAttrResponse {
-  int32 status = 1;
+  int32 errnum = 1;
   bytes statBuf = 2;
 }
 
@@ -89,4 +92,33 @@ message RenameRequest {
 
 message RenameResponse {
   int32 status = 1;
+}
+
+message TruncateRequest {
+  string path = 1;
+  int32 len = 2;
+}
+
+message TruncateResponse {
+  int32 errnum = 1;
+}
+
+message MknodRequest {
+  string path = 1;
+  uint32 mode = 2;
+  uint64 dev = 3;
+}
+
+message MknodResponse {
+  int32 errnum = 1;
+}
+
+message ReaddirRequest {
+  uint64 dp = 1;
+}
+
+message ReaddirResponse {
+  int32 numentries = 1;
+  bytes dirent = 2;
+  bytes dnames = 3;
 }
