@@ -148,7 +148,7 @@ int unreliable_mknod(const char *path, mode_t mode, dev_t dev)
         return ret;
     }
 
-    ret = mknod(path, mode, dev);    
+    ret = afsMknod(path, mode, dev);    
     if (ret == -1) {
         return -errno;
     }
@@ -310,7 +310,7 @@ int unreliable_truncate(const char *path, off_t length)
         return ret;
     }
 
-    ret = truncate(path, length); 
+    ret = afsTruncate(path, length); 
     if (ret == -1) {
         return -errno;
     }
@@ -772,7 +772,7 @@ int unreliable_ftruncate(const char *path, off_t length,
         return ret;
     }
 
-    ret = truncate(path, length);
+    ret = afsTruncate(path, length);
     if (ret == -1) {
         return -errno;
     }

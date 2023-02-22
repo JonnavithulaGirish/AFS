@@ -53,6 +53,11 @@ using FS::RmdirRequest;
 using FS::RmdirResponse;
 using FS::ReleasedirRequest;
 using FS::ReleasedirResponse;
+using FS::TruncateRequest;
+using FS::TruncateResponse;
+using FS::MknodRequest;
+using FS::MknodResponse;
+
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -96,7 +101,7 @@ private:
   AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
   {
      m_mountPoint= mountPoint;
-     m_cacheDir="/home/girish/afscache/";
+     m_cacheDir="/home/araghavan/cs739/cache/";
     //m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
     //m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
   }
@@ -130,15 +135,15 @@ public:
     Status status = stub_->GetAttr(&context, request, &reply);
 
     //On Response received
-    if (status.ok() && reply.status() == 1)
+    if (status.ok() && reply.errnum() == 1)
     {
       memcpy((char *)buf, reply.statbuf().c_str(), sizeof(struct stat));
       return 1;
     }
     else
     {
-      if(reply.status() !=1)
-        errno = reply.status();
+      if(reply.errnum() != 1)
+        errno = reply.errnum();
       cout << "Error on GetAttr() with errno :: "<< errno << endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
@@ -190,7 +195,7 @@ public:
     request.set_flags(flags);
     Status status = stub_->Open(&context, request, &reply);
     //cout << "calling Open with the following path :: " << request.path()<< endl;
-    if (status.ok() && reply.status() == 1)
+    if (status.ok() && reply.errnum() == 1)
     {
       //Save the data in a new file and return file descriptor
       int fd1 = open(absoluteCachePath.c_str(), flags | O_CREAT,0777);
@@ -253,7 +258,7 @@ public:
     //std::cout<<  request.filedata()<< " is being sent" << std::endl;
     Status status = stub_->Close(&context, request, &reply);
       
-    if (status.ok() && reply.status() == 1){
+    if (status.ok() && reply.errnum() == 1){
       return 0;
     }
     else{
@@ -280,15 +285,15 @@ public:
 
 
     //On Response received
-    if (status.ok() && reply.status() == 1)
+    if (status.ok() && reply.errnum() == 1)
     {
-      cout << "Mkdir status ok " << reply.status() << endl;
-      return (int)reply.status();
+      cout << "Mkdir status ok " << reply.errnum() << endl;
+      return 0;
     }
     else
     {
-      if(reply.status() !=1)
-        errno = reply.status();
+      if(reply.errnum() !=1)
+        errno = reply.errnum();
       cout << "Mkdir status not ok :/" << endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
@@ -311,15 +316,15 @@ public:
 
 
     //On Response received
-    if (status.ok() && reply.status() == 1)
+    if (status.ok() && reply.errnum() == 1)
     {
-      cout << "Rmdir status ok " << reply.status() << endl;
-      return (int)reply.status();
+      cout << "Rmdir status ok " << reply.errnum() << endl;
+      return 0;
     }
     else
     {
-      if(reply.status() !=1)
-        errno = reply.status();
+      if(reply.errnum() !=1)
+        errno = reply.errnum();
       cout << "Rmdir status not ok :/" << endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
@@ -343,15 +348,15 @@ public:
 
 
     //On Response received
-    if (status.ok() && reply.status() == 1)
+    if (status.ok() && reply.errnum() == 1)
     {
-      cout << "Opendir status ok " << reply.status() << endl;
+      cout << "Opendir status ok " << reply.errnum() << endl;
       return reply.fh();
     }
     else
     {
-      if(reply.status() !=1)
-        errno = reply.status();
+      if(reply.errnum() !=1)
+        errno = reply.errnum();
       cout << "Opendir status not ok :/" << endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
@@ -374,16 +379,77 @@ public:
 
 
     //On Response received
-    if (status.ok() && reply.status() == 1)
+    if (status.ok() && reply.errnum() == 1)
     {
-      cout << "Releasedir status ok " << reply.status() << endl;
-      return reply.status();
+      cout << "Releasedir status ok " << reply.errnum() << endl;
+      return 0;
     }
     else
     {
-      if(reply.status() !=1)
-        errno = reply.status();
+      if(reply.errnum() !=1)
+        errno = reply.errnum();
       cout << "Releasedir status not ok :/" << endl;
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return -1;
+    }
+  }
+
+  int Truncate(string path, int len)
+  {
+    cout << "Truncate called @path " << path << endl;
+    TruncateRequest request;
+    TruncateResponse reply;
+    ClientContext context;
+
+    //Setting request parameters
+    path = removeMountPointPrefix(path);
+    request.set_path(path);
+    request.set_len(len);
+
+    //Trigger RPC Call for GetAttr
+    Status status = stub_->Truncate(&context, request, &reply);
+
+    //On Response received
+    if (status.ok() && reply.errnum() == 1)
+    { 
+      return 0;
+    }
+    else
+    {
+      if(reply.errnum() != 1)
+        errno = reply.errnum();
+      cout << "Error on Truncate() with errno :: "<< errno << endl;
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return -1;
+    }
+  }
+
+  int Mknod(string path, mode_t mode, dev_t dev)
+  {
+    cout << "Mknod called @path with mode and dev =" << path <<", " << mode << "," << dev << endl;
+    MknodRequest request;
+    MknodResponse reply;
+    ClientContext context;
+
+    //Setting request parameters
+    path = removeMountPointPrefix(path);
+    request.set_path(path);
+    request.set_mode(mode);
+    request.set_dev(dev);
+
+    //Trigger RPC Call for GetAttr
+    Status status = stub_->Mknod(&context, request, &reply);
+
+    //On Response received
+    if (status.ok() && reply.errnum() == 1)
+    { 
+      return 0;
+    }
+    else
+    {
+      if(reply.errnum() != 1)
+        errno = reply.errnum();
+      cout << "Error on Mknod() with errno :: "<< errno << endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
     }
@@ -433,4 +499,16 @@ extern "C" int64_t afsReleasedir(int64_t fh)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
   return afsClient->Releasedir(fh);  
+}
+
+extern "C" int afsTruncate(const char *path, int len)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Truncate(string(path), len);
+}
+
+extern "C" int afsMknod(const char *path, mode_t mode, dev_t dev)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Mknod(string(path), mode, dev);
 }

@@ -41,6 +41,7 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
+
 using FS::AFS;
 using FS::GetAttrRequest;
 using FS::GetAttrResponse;
@@ -56,9 +57,14 @@ using FS::RmdirRequest;
 using FS::RmdirResponse;
 using FS::ReleasedirRequest;
 using FS::ReleasedirResponse;
+using FS::TruncateRequest;
+using FS::TruncateResponse;
+using FS::MknodRequest;
+using FS::MknodResponse;
+
 using namespace std;
 
-string serverBaseDir("/home/girish/serverfs/");
+string serverBaseDir("/home/araghavan/cs739/serverfs/");
 
 // Logic and data behind the server's behavior.
 class AfsServiceImpl final : public AFS::Service {
@@ -74,13 +80,13 @@ class AfsServiceImpl final : public AFS::Service {
     if ( ret == -1)
     {
       //return error status on failure
-      reply->set_status(errno);
+      reply->set_errnum(errno);
 	    return Status::OK;
     }
 
     //Send File Attributes Data
     reply->set_statbuf((char *)&buf,sizeof(struct stat));
-    reply->set_status(1);
+    reply->set_errnum(1);
     return Status::OK;
   }
   
@@ -94,7 +100,7 @@ class AfsServiceImpl final : public AFS::Service {
     int fd = open(path.c_str(), request->flags());
     if (fd == -1) {
       //return error status on failure
-      reply->set_status(-1);
+      reply->set_errnum(-1);
 	    return Status::OK;
     }
 
@@ -104,7 +110,7 @@ class AfsServiceImpl final : public AFS::Service {
     if (ret == -1)
     {
       //return error status on failure
-      reply->set_status(-1);
+      reply->set_errnum(-1);
 	    return Status::OK;
     }
 
@@ -113,14 +119,14 @@ class AfsServiceImpl final : public AFS::Service {
     ret = pread(fd, buf, statBuf.st_size, 0);
     if (ret == -1) {
       //return error status on failure
-      reply->set_status(-1);
+      reply->set_errnum(-1);
 	    return Status::OK;
     }
 
     //Send File Data
     reply->set_filedata(buf, statBuf.st_size);
     std::cout<<  reply->filedata()<< " is being returned" << std::endl;
-    reply->set_status(1);
+    reply->set_errnum(1);
     
     delete[] buf;
     close(fd);
@@ -142,7 +148,7 @@ class AfsServiceImpl final : public AFS::Service {
     //cout << "Creating temp file status :: " << fd << endl; 
     if (fd == -1) {
       //return error status on failure
-      reply->set_status(-1);
+      reply->set_errnum(-1);
 	    return Status::OK;
     }
 
@@ -152,7 +158,7 @@ class AfsServiceImpl final : public AFS::Service {
     //cout << "write status::  " << ret << endl; 
     if (ret == -1) {
       //return error status on failure
-      reply->set_status(-1);
+      reply->set_errnum(-1);
 	    return Status::OK;
     }
     fsync(fd);
@@ -162,7 +168,7 @@ class AfsServiceImpl final : public AFS::Service {
       //return error status on failure
       cout << errno << endl;
       cout << "renaming failed " << endl; 
-      reply->set_status(-1);
+      reply->set_errnum(-1);
 	    return Status::OK;
     }
 
@@ -170,7 +176,7 @@ class AfsServiceImpl final : public AFS::Service {
     close(fd);
     cout << "close successful " << endl; 
     //Send File Data
-    reply->set_status(1);
+    reply->set_errnum(1);
     
     return Status::OK;
   }
@@ -183,11 +189,11 @@ class AfsServiceImpl final : public AFS::Service {
 
     if (ret == 0 || (ret == -1 && errno == EEXIST))
     {
-      response->set_status(1);
+      response->set_errnum(1);
       return Status::OK;
     }
 
-    response->set_status(errno);
+    response->set_errnum(errno);
     return Status::OK;
   }
 
@@ -198,7 +204,7 @@ class AfsServiceImpl final : public AFS::Service {
 
     DIR *dir = opendir(path.c_str());
     if (!dir) {
-        response->set_status(errno);
+        response->set_errnum(errno);
         return Status::OK;
     }
 
@@ -206,7 +212,7 @@ class AfsServiceImpl final : public AFS::Service {
     std::cout<< "Opendir returning filehandle value:: "<< val << std::endl;
     //std::cout<< "Opendir returning value original "<< dir << std::endl;
 
-    response->set_status(1);
+    response->set_errnum(1);
     response->set_fh(val);
     return Status::OK;
   }
@@ -218,11 +224,11 @@ class AfsServiceImpl final : public AFS::Service {
     std::cout<< "RemoveDir Got Called with path:: "<< path << std::endl;
     int ret = rmdir(path.c_str()); 
     if (ret == -1) {
-        response->set_status(errno);
+        response->set_errnum(errno);
         return Status::OK;
     }
 
-    response->set_status(1);
+    response->set_errnum(1);
     return Status::OK;
   }
 
@@ -233,13 +239,46 @@ class AfsServiceImpl final : public AFS::Service {
     DIR *dir = (DIR *) request->fh();
     int ret = closedir(dir);
     if (ret == -1) {
-        response->set_status(errno);
+        response->set_errnum(errno);
         return Status::OK;
     }
 
-    response->set_status(1);
+    response->set_errnum(1);
     return Status::OK;
   }
+
+  Status Truncate(ServerContext* context, const TruncateRequest* request, TruncateResponse* response) override
+  {
+    string path = serverBaseDir + request->path();
+    std::cout<< "Truncate Got Called with path and len :: "<< path << ", " << request->len() << std::endl;
+
+    int ret = truncate(path.c_str(), request->len());
+    if (ret == -1)
+    {
+      response->set_errnum(errno);
+      return Status::OK;
+    }
+
+    response->set_errnum(1);
+    return Status::OK;
+  }
+  
+  Status Mknod(ServerContext* context, const MknodRequest* request, MknodResponse* response) override
+  {
+    string path = serverBaseDir + request->path();
+    std::cout<< "Mknod Got Called with path, mode, dev :: "<< path << ", " << request->mode() << ", " << request->dev() << std::endl;
+
+    int ret = mknod(path.c_str(), request->mode(), request->dev());
+    if (ret == -1)
+    {
+      response->set_errnum(errno);
+      return Status::OK;
+    }
+
+    response->set_errnum(1);
+    return Status::OK;
+  }
+  
 };
 
 void RunServer() {
