@@ -5,16 +5,16 @@
 #include <unistd.h>
 
 int main(){
-    printf("Hi startover\n");
-    int ret =  rename("/home/rishideepreddy/AFSMount/def","/home/rishideepreddy/AFSMount/abc");
-    if(ret == 0){
-        printf("Rename Successful\n");
-        struct stat buff;
-        lstat("/home/rishideepreddy/AFSMount/def",&buff);
-        printf("%ld\n", buff.st_ino);
-    }else{
-        printf("Rename failed\n");
-    }
+    // printf("Hi startover\n");
+    // int ret =  rename("/home/rishideepreddy/AFSMount/def","/home/rishideepreddy/AFSMount/abc");
+    // if(ret == 0){
+    //     printf("Rename Successful\n");
+    //     struct stat buff;
+    //     lstat("/home/rishideepreddy/AFSMount/def",&buff);
+    //     printf("%ld\n", buff.st_ino);
+    // }else{
+    //     printf("Rename failed\n");
+    // }
     // struct stat buf;
     // char str[100];
     // struct stat buff;
@@ -40,4 +40,8 @@ int main(){
     // printf("m:: %d\n",m);
     // if(m == 1)
     //     printf("close successful\n");
+
+    int ret = creat("/home/araghavan/cs739/mntpt/helloworld", 0777);
+    printf("%d - creat\n", ret);
+    return 0;
 }

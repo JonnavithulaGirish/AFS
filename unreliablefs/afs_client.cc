@@ -108,7 +108,7 @@ private:
   AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
   {
      m_mountPoint= mountPoint;
-     m_cacheDir="/home/girish/afscache/";
+     m_cacheDir="/home/araghavan/cs739/cache/";
     //m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
     //m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
   }
@@ -543,6 +543,21 @@ public:
       return -1;
     }
   }
+
+  int Creat(string path, int flags, mode_t mode)
+  {
+    // completely local to client, no need for rpc
+    path = removeMountPointPrefix(path);
+    cout << "Creat called @path with flags and mode =" << path <<", " << flags << "," << mode << endl;
+    string absoluteCachePath = m_cacheDir + sha256(path);
+    int fd = open(absoluteCachePath.c_str(), flags, mode);
+    if (fd == -1)
+    {
+      return -1;
+    }
+    fileMap[fd] = path;
+    return fd;
+  }
 };
 
 
@@ -614,4 +629,10 @@ extern "C" int afsReaddir(int64_t dp, int *sz, char ***dnames)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
   return afsClient->Readdir(dp, sz, dnames);
+}
+
+extern "C" int afsCreat(const char *path, int flags, mode_t mode)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Creat(string(path), flags, mode);
 }
