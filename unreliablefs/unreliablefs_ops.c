@@ -238,7 +238,7 @@ int unreliable_rename(const char *oldpath, const char *newpath)
         return ret;
     }
 
-    ret = rename(oldpath, newpath);
+    ret = afsRename(oldpath, newpath);
     if (ret == -1) {
         return -errno;
     }

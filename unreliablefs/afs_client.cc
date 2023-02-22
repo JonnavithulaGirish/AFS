@@ -53,6 +53,8 @@ using FS::RmdirRequest;
 using FS::RmdirResponse;
 using FS::ReleasedirRequest;
 using FS::ReleasedirResponse;
+using FS::RenameRequest;
+using FS::RenameResponse;
 using FS::TruncateRequest;
 using FS::TruncateResponse;
 using FS::MknodRequest;
@@ -61,6 +63,8 @@ using FS::MknodResponse;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
+
+
 
 using namespace std;
 
@@ -101,7 +105,7 @@ private:
   AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
   {
      m_mountPoint= mountPoint;
-     m_cacheDir="/home/araghavan/cs739/cache/";
+     m_cacheDir="/home/rishideepreddy/clientCache/";
     //m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
     //m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
   }
@@ -364,6 +368,7 @@ public:
   }
 
 
+
   int64_t Releasedir(int64_t fh)
   {
     cout << "Releasedir called @path " << fh << endl;
@@ -392,6 +397,38 @@ public:
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
     }
+  }
+
+  int Rename(std::string oldPath, std::string newPath){
+    cout << "Rename called @oldPath " << oldPath<<" @newPath "<<newPath << endl;
+    RenameRequest request;
+    RenameResponse reply;
+    ClientContext context;
+
+    oldPath = removeMountPointPrefix(oldPath);
+    newPath = removeMountPointPrefix(newPath);
+
+    request.set_oldpath(oldPath);
+    request.set_newpath(newPath);
+
+    Status status = stub_->Rename(&context, request, &reply);
+
+
+    //On Response received
+    if (status.ok() && reply.status() == 1)
+    {
+      cout << "Rename status ok " << reply.status() << endl;
+      return reply.status();
+    }
+    else
+    {
+      if(reply.status() !=1)
+        errno = reply.status();
+      cout << "Rename status not ok :/" << endl;
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
+      return -1;
+    }
+
   }
 
   int Truncate(string path, int len)
@@ -456,6 +493,8 @@ public:
   }
 };
 
+
+
 AfsClientSingleton *AfsClientSingleton ::instancePtr = NULL;
 
 extern "C" int afsGetAttr(const char *path, struct stat *buf)
@@ -511,4 +550,10 @@ extern "C" int afsMknod(const char *path, mode_t mode, dev_t dev)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
   return afsClient->Mknod(string(path), mode, dev);
+}
+
+extern "C" int64_t afsRename(const char* oldPath, const char* newPath)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  return afsClient->Rename(string(oldPath),string(newPath));  
 }

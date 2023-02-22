@@ -57,6 +57,8 @@ using FS::RmdirRequest;
 using FS::RmdirResponse;
 using FS::ReleasedirRequest;
 using FS::ReleasedirResponse;
+using FS::RenameRequest;
+using FS::RenameResponse;
 using FS::TruncateRequest;
 using FS::TruncateResponse;
 using FS::MknodRequest;
@@ -64,7 +66,7 @@ using FS::MknodResponse;
 
 using namespace std;
 
-string serverBaseDir("/home/araghavan/cs739/serverfs/");
+string serverBaseDir("/home/rishideepreddy/serverFS/");
 
 // Logic and data behind the server's behavior.
 class AfsServiceImpl final : public AFS::Service {
@@ -278,8 +280,29 @@ class AfsServiceImpl final : public AFS::Service {
     response->set_errnum(1);
     return Status::OK;
   }
+
+    Status Rename(ServerContext* context, const RenameRequest* request, RenameResponse* response) override
+  {
+    string oldPath = serverBaseDir + request->oldpath();
+    string newPath = serverBaseDir + request->newpath();
+    std::cout<< "Rename Got Called with path:: "<< oldPath <<" " <<newPath<< std::endl;
+    // int ret = mkdir(path.c_str(), request->mode());
+    int ret = rename(oldPath.c_str(),newPath.c_str());
+
+    if (ret == -1) {
+      response->set_status(errno);
+      return Status::OK;
+    }
+
+    response->set_status(1);
+    return Status::OK;
+  }
+
+  
   
 };
+
+
 
 void RunServer() {
   std::string server_address("0.0.0.0:50051");
