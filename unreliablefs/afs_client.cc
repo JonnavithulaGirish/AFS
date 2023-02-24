@@ -61,6 +61,8 @@ using FS::MknodRequest;
 using FS::MknodResponse;
 using FS::ReaddirRequest;
 using FS::ReaddirResponse;
+using FS::CreatRequest;
+using FS::CreatResponse;
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -72,7 +74,7 @@ using namespace std;
 
 char *mountPoint;
 char *cacheDir;
-char serverNodePort[] = "10.10.1.4:50051";
+char serverNodePort[] = "localhost:50051";
 
 string sha256(const string str)
 {
@@ -570,14 +572,36 @@ public:
     // completely local to client, no need for rpc
     path = removeMountPointPrefix(path);
     cout << "Creat called @path with flags and mode =" << path <<", " << flags << "," << mode << endl;
-    string absoluteCachePath = m_cacheDir + sha256(path);
-    int fd = open(absoluteCachePath.c_str(), flags, mode);
-    if (fd == -1)
+    
+    CreatRequest request;
+    CreatResponse reply;
+    ClientContext context;
+    request.set_path(path);
+    request.set_mode(mode);
+    request.set_flags(flags);
+
+    Status status = stub_->Creat(&context, request, &reply);
+
+    if (status.ok() && reply.errnum() == 1)
+    { 
+      string absoluteCachePath = m_cacheDir + sha256(path);
+      int fd = open(absoluteCachePath.c_str(), flags, mode);
+      if (fd == -1)
+      {
+        return -1;
+      }
+      fileMap[fd] = path;
+
+      return fd;
+    }
+    else
     {
+      if(reply.errnum() != 1)
+        errno = reply.errnum();
+      cout << "Error on Creat() with errno :: "<< errno << endl;
+      cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
     }
-    fileMap[fd] = path;
-    return fd;
   }
 };
 

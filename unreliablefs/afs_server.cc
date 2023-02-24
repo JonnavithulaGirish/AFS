@@ -65,10 +65,12 @@ using FS::MknodRequest;
 using FS::MknodResponse;
 using FS::ReaddirRequest;
 using FS::ReaddirResponse;
+using FS::CreatRequest;
+using FS::CreatResponse;
 
 using namespace std;
 
-string serverBaseDir("/home/girish/serverfs/");
+string serverBaseDir("/users/Girish/serverfs/");
 
 // Logic and data behind the server's behavior.
 class AfsServiceImpl final : public AFS::Service {
@@ -130,13 +132,29 @@ class AfsServiceImpl final : public AFS::Service {
 	    return Status::OK;
     }
 
+    close(fd);
+
     //Send File Data
     reply->set_filedata(buf, statBuf.st_size);
     std::cout<<  reply->filedata()<< " is being returned" << std::endl;
     reply->set_errnum(1);
     
     delete[] buf;
+    return Status::OK;
+  }
+
+  Status Creat(ServerContext* context, const CreatRequest* request, CreatResponse* reply) override {
+    string path = serverBaseDir + request->path();
+    std::cout<< "Creat Got Called with path, mode, flag:: " << path << ", " << request->mode() << ", " << request->flags() << std::endl;
+    int fd = open(path.c_str(), request->flags(), request->mode());
+    if (fd == -1) {
+      //return error status on failure
+      cout<< "a" << endl;
+      reply->set_errnum(errno);
+	    return Status::OK;
+    }
     close(fd);
+    reply->set_errnum(1);
     return Status::OK;
   }
 

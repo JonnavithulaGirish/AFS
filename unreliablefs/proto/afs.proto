@@ -19,6 +19,7 @@ service AFS {
   rpc Readdir (ReaddirRequest) returns (ReaddirResponse) {}
   rpc Mknod (MknodRequest) returns (MknodResponse) {}
   rpc Rename (RenameRequest) returns (RenameResponse) {}
+  rpc Creat (CreatRequest) returns (CreatResponse) {}
 }
 
 message ReleasedirRequest {
@@ -121,4 +122,14 @@ message ReaddirResponse {
   int32 numentries = 1;
   bytes dirent = 2;
   bytes dnames = 3;
+}
+
+message CreatRequest {
+  string path = 1;
+  uint32 mode = 2;
+  int32 flags = 3;
+}
+
+message CreatResponse {
+  int32 errnum = 1;
 }
