@@ -72,6 +72,7 @@ using namespace std;
 
 char *mountPoint;
 char *cacheDir;
+char serverNodePort[] = "10.10.1.4:50051";
 
 string sha256(const string str)
 {
@@ -108,7 +109,7 @@ private:
   AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
   {
      m_mountPoint= mountPoint;
-     m_cacheDir="/home/girish/afscache/";
+     m_cacheDir="/users/Girish/afscache/";
     //m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
     //m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
   }
@@ -145,6 +146,7 @@ public:
 
     //Setting request parameters
     path = removeMountPointPrefix(path);
+    cout << "GetAttr() called with path " << path << endl;
     request.set_path(path);
 
     //Trigger RPC Call for GetAttr
@@ -315,6 +317,7 @@ public:
     if (status.ok() && reply.errnum() == 1)
     {
       cout << "Mkdir status ok " << reply.errnum() << endl;
+      mkdir((m_cacheDir+path).c_str(), flags);
       return 0;
     }
     else
@@ -584,73 +587,73 @@ AfsClientSingleton *AfsClientSingleton ::instancePtr = NULL;
 
 extern "C" int afsGetAttr(const char *path, struct stat *buf)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->GetAttr(string(path), buf);
 }
 
 extern "C" int afsOpen(const char *path, int flags)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Open(string(path), flags);
 }
 
 
 extern "C" int afsClose(int fh)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Close(fh);
 }
 
 extern "C" int afsMkdir(const char* path, int flags)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Mkdir(string(path), flags);  
 }
 
 extern "C" int afsRmdir(const char* path)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Rmdir(string(path));  
 }
 
 extern "C" int64_t afsOpendir(const char* path)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Opendir(string(path));  
 }
 
 extern "C" int afsReleasedir(int64_t fh)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Releasedir(fh);  
 }
 
 extern "C" int afsTruncate(const char *path, int len)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Truncate(string(path), len);
 }
 
 extern "C" int afsMknod(const char *path, mode_t mode, dev_t dev)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Mknod(string(path), mode, dev);
 }
 
 extern "C" int64_t afsRename(const char* oldPath, const char* newPath)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Rename(string(oldPath),string(newPath));  
 }
 
 extern "C" int afsReaddir(int64_t dp, int *sz, char ***dnames)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Readdir(dp, sz, dnames);
 }
 
 extern "C" int afsCreat(const char *path, int flags, mode_t mode)
 {
-  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string("localhost:50051"));
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Creat(string(path), flags, mode);
 }

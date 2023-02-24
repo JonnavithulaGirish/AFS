@@ -113,7 +113,7 @@ int unreliable_getattr(const char *path, struct stat *buf)
     
     memset(buf, 0, sizeof(struct stat));
     if(afsGetAttr(path,buf) == -1){
-        //printf("errno :: %d\n", -errno);
+        printf("errno :: %d\n", -errno);
         return -errno;
     }
 
@@ -518,6 +518,7 @@ int unreliable_fsync(const char *path, int datasync, struct fuse_file_info *fi)
 int unreliable_setxattr(const char *path, const char *name,
                         const char *value, size_t size, int flags)
 {
+    return 0;
     int ret = error_inject(path, OP_SETXATTR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -540,6 +541,8 @@ int unreliable_setxattr(const char *path, const char *name,
 int unreliable_getxattr(const char *path, const char *name,
                         char *value, size_t size)
 {
+    return ENODATA;
+    printf("in unreliable getxattr @path %s\n", path);
     int ret = error_inject(path, OP_GETXATTR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -561,6 +564,7 @@ int unreliable_getxattr(const char *path, const char *name,
 
 int unreliable_listxattr(const char *path, char *list, size_t size)
 {
+    return ENODATA;
     int ret = error_inject(path, OP_LISTXATTR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -582,6 +586,7 @@ int unreliable_listxattr(const char *path, char *list, size_t size)
 
 int unreliable_removexattr(const char *path, const char *name)
 {
+    return 0;
     int ret = error_inject(path, OP_REMOVEXATTR);
     if (ret == -ERRNO_NOOP) {
         return 0;
@@ -666,6 +671,12 @@ int unreliable_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     //         break;
     // }
     afsReleasedir(dp);
+
+    // garbage collect
+    for (int i = 0; i < sz; i++)
+    {
+        free(dnames[i]);
+    }
     free(dnames);
     free(de);       // TODO: Free individual strings
     printf("g\n");
@@ -740,7 +751,7 @@ void unreliable_destroy(void *private_data)
 
 int unreliable_access(const char *path, int mode)
 {
-    printf("In unreliable access \n");
+    printf("In unreliable access @path %s\n", path);
 
     int ret = error_inject(path, OP_ACCESS);
     if (ret == -ERRNO_NOOP) {
@@ -751,6 +762,7 @@ int unreliable_access(const char *path, int mode)
 
     ret = access(path, mode); 
     if (ret == -1) {
+        printf("access error - %d\n", ret);
         return -errno;
     }
     
