@@ -30,6 +30,7 @@
 #include <dirent.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
+#include <mutex>
 
 #ifdef BAZEL_BUILD
 #include "examples/protos/helloworld.grpc.pb.h"
@@ -41,6 +42,8 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
+using grpc::ServerReaderWriter;
+using grpc::ServerWriter;
 
 using FS::AFS;
 using FS::GetAttrRequest;
@@ -67,8 +70,12 @@ using FS::ReaddirRequest;
 using FS::ReaddirResponse;
 using FS::CreatRequest;
 using FS::CreatResponse;
+using FS::UnlinkRequest;
+using FS::UnlinkResponse;
 
 using namespace std;
+
+mutex mtx;
 
 string serverBaseDir("/users/Girish/serverfs/");
 
@@ -95,64 +102,120 @@ class AfsServiceImpl final : public AFS::Service {
     reply->set_errnum(1);
     return Status::OK;
   }
-  
-  Status Open(ServerContext* context, const OpenRequest* request,
-                  OpenResponse* reply) override {
-    
+
+  Status Open(ServerContext* context, const OpenRequest* request, ServerWriter<OpenResponse>* writer) override {
     string path = serverBaseDir + request->path();
-    std::cout<< "Open Got Called with path:: "<< path << std::endl;
+    std::cout<< "Open Got Called with path:: "<< path <<std::endl;
+    mtx.lock();
 
-    //Open File 
-    int fd = open(path.c_str(), request->flags());
-    if (fd == -1) {
-      //return error status on failure
-      cout<< "a" << endl;
-      reply->set_errnum(errno);
-	    return Status::OK;
-    }
+    int fd = open(request->path().c_str(), request->flags(), 0777);
 
-    //Get File Attributes
-    struct stat statBuf;
-    int ret = lstat(path.c_str(), &statBuf);
+    struct stat statbuf;
+    int ret = lstat(request->path().c_str(), &statbuf);
     if (ret == -1)
     {
-      cout<< "b" << endl;
-      //return error status on failure
-      reply->set_errnum(errno);
-	    return Status::OK;
+      cout << "Open:: lstat failed, errno - " << errno << endl;
+      OpenResponse reply;
+      reply.set_errnum(errno);
+      writer->Write(reply);
+      return Status::OK;
     }
 
-    //Read File
-    char *buf = new char[statBuf.st_size];
-    ret = pread(fd, buf, statBuf.st_size, 0);
-    if (ret == -1) {
-      cout<< "c" << endl;
-      //return error status on failure
-      reply->set_errnum(errno);
-	    return Status::OK;
+    unsigned int filesz = statbuf.st_size;
+    int chunksz = 4000;
+    int offset = 0;
+    ret = 1;
+    while (ret)
+    {
+      char chunk[chunksz];
+      ret = pread(fd, chunk, chunksz, offset);
+      if (ret == -1)
+      {
+        cout << "Open:: pread failed, errno - " << errno << endl;  
+        OpenResponse reply;
+        reply.set_errnum(errno);
+        writer->Write(reply);
+        return Status::OK;
+      }
+      offset += ret;
+      OpenResponse reply;
+      reply.set_errnum(1);
+      reply.set_filedata((char *)chunk, ret);
+      writer->Write(reply);
     }
-
+    fsync(fd);
     close(fd);
 
-    //Send File Data
-    reply->set_filedata(buf, statBuf.st_size);
-    std::cout<<  reply->filedata()<< " is being returned" << std::endl;
-    reply->set_errnum(1);
-    
-    delete[] buf;
+    mtx.unlock();
+
     return Status::OK;
   }
+
+  Status Close(ServerContext* context, ServerReader<CloseRequest>* reader, CloseResponse* reply) override
+  {
+    
+  }
+
+
+  
+  // Status Open(ServerContext* context, const OpenRequest* request,
+  //                 OpenResponse* reply) override {
+    
+  //   string path = serverBaseDir + request->path();
+  //   std::cout<< "Open Got Called with path:: "<< path << std::endl;
+
+  //   //Open File 
+  //   int fd = open(path.c_str(), request->flags());
+  //   if (fd == -1) {
+  //     //return error status on failure
+  //     cout<< "a" << endl;
+  //     reply->set_errnum(errno);
+	//     return Status::OK;
+  //   }
+
+  //   //Get File Attributes
+  //   struct stat statBuf;
+  //   int ret = lstat(path.c_str(), &statBuf);
+  //   if (ret == -1)
+  //   {
+  //     cout<< "b" << endl;
+  //     //return error status on failure
+  //     reply->set_errnum(errno);
+	//     return Status::OK;
+  //   }
+
+  //   //Read File
+  //   char *buf = new char[statBuf.st_size];
+  //   ret = pread(fd, buf, statBuf.st_size, 0);
+  //   if (ret == -1) {
+  //     cout<< "c" << endl;
+  //     //return error status on failure
+  //     reply->set_errnum(errno);
+	//     return Status::OK;
+  //   }
+  //   fsync(fd);
+  //   close(fd);
+
+  //   //Send File Data
+  //   reply->set_filedata(buf, statBuf.st_size);
+  //   std::cout<<  reply->filedata()<< " is being returned" << std::endl;
+  //   reply->set_errnum(1);
+    
+  //   delete[] buf;
+  //   return Status::OK;
+  // }
 
   Status Creat(ServerContext* context, const CreatRequest* request, CreatResponse* reply) override {
     string path = serverBaseDir + request->path();
     std::cout<< "Creat Got Called with path, mode, flag:: " << path << ", " << request->mode() << ", " << request->flags() << std::endl;
-    int fd = open(path.c_str(), request->flags(), request->mode());
+    int fd = open(path.c_str(), request->flags(), 0777);
     if (fd == -1) {
       //return error status on failure
       cout<< "a" << endl;
       reply->set_errnum(errno);
 	    return Status::OK;
     }
+    fsync(fd);
     close(fd);
     reply->set_errnum(1);
     return Status::OK;
@@ -334,7 +397,7 @@ class AfsServiceImpl final : public AFS::Service {
     return Status::OK;
   }
 
-    Status Rename(ServerContext* context, const RenameRequest* request, RenameResponse* response) override
+  Status Rename(ServerContext* context, const RenameRequest* request, RenameResponse* response) override
   {
     string oldPath = serverBaseDir + request->oldpath();
     string newPath = serverBaseDir + request->newpath();
@@ -351,8 +414,21 @@ class AfsServiceImpl final : public AFS::Service {
     return Status::OK;
   }
 
-  
-  
+  Status Unlink(ServerContext* context, const UnlinkRequest* request, UnlinkResponse* response) override
+  {
+    string path = serverBaseDir + request->path();
+    std::cout<< "Unlink Got Called with path :: "<< path << std::endl;
+
+    int ret = unlink(request->path().c_str());
+    if (ret == -1)
+    {
+      response->set_errnum(errno);
+      return Status::OK;
+    }
+
+    response->set_errnum(1);
+    return Status::OK;
+  }
 };
 
 

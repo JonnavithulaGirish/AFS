@@ -185,7 +185,7 @@ int unreliable_unlink(const char *path)
         return ret;
     }
 
-    ret = unlink(path); 
+    ret = afsUnlink(path); 
     if (ret == -1) {
         return -errno;
     }
@@ -355,15 +355,15 @@ int unreliable_read(const char *path, char *buf, size_t size, off_t offset,
     }
 
     int fd;
-
-    //if (fi == NULL) {
-	fd = afsOpen(path, O_RDONLY);
-    //printf("filedesciptor on client is :: %d\n",fd);
-    //printf("filedescriptor check :: %ld\n",fi->fh);
-    //} else {
-	//fd = fi->fh;
-    //printf("filedesciptor on client is +ve flow :: %d\n",fd);
-    //}
+    printf("fi->fh = %ld\n", fi->fh);
+    if (fi == NULL) {
+	    fd = afsOpen(path, O_RDONLY);
+        printf("filedesciptor on client is :: %d\n",fd);
+        printf("filedescriptor check :: %ld\n",fi->fh);
+    } else {
+	    fd = fi->fh;
+        printf("filedesciptor on client is +ve flow :: %d\n",fd);
+    }
 
     if (fd == -1) {
         //printf("yo error");
@@ -396,15 +396,15 @@ int unreliable_write(const char *path, const char *buf, size_t size,
     }
 
     int fd;
-    //(void) fi;
-    //if(fi == NULL) {
-    printf("fd:: %ld\n", fi->fh);
-	fd = afsOpen(path, O_WRONLY);
-    //printf("filedesciptor on client is :: %d\n",fd);
-    //printf("filedescriptor check :: %ld\n",fi->fh);
-    //} else {
-	//fd = fi->fh;
-    //}
+    (void) fi;
+    if(fi == NULL) {
+        printf("fd:: %ld\n", fi->fh);
+	    fd = afsOpen(path, O_WRONLY);
+        printf("filedesciptor on client is :: %d\n",fd);
+        printf("filedescriptor check :: %ld\n",fi->fh);
+    } else {
+	fd = fi->fh;
+    }
 
     if (fd == -1) {
 	return -errno;
@@ -780,7 +780,7 @@ int unreliable_create(const char *path, mode_t mode,
         return ret;
     }
 
-    ret = afsCreat(path, fi->flags, mode);
+    ret = afsOpen(path, fi->flags);
     if (ret == -1) {
         return -errno;
     }

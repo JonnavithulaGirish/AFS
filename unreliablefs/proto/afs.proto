@@ -9,8 +9,8 @@ package FS;
 
 service AFS {
   rpc GetAttr (GetAttrRequest) returns (GetAttrResponse) {}
-  rpc Open (OpenRequest) returns (OpenResponse) {}
-  rpc Close (CloseRequest) returns (CloseResponse){}
+  rpc Open (OpenRequest) returns (stream OpenResponse) {}
+  rpc Close (stream CloseRequest) returns (CloseResponse){}
   rpc Truncate(TruncateRequest) returns (TruncateResponse) {}
   rpc Mkdir (MkdirRequest) returns (MkdirResponse) {}
   rpc Rmdir (RmdirRequest) returns (RmdirResponse) {}
@@ -20,6 +20,7 @@ service AFS {
   rpc Mknod (MknodRequest) returns (MknodResponse) {}
   rpc Rename (RenameRequest) returns (RenameResponse) {}
   rpc Creat (CreatRequest) returns (CreatResponse) {}
+  rpc Unlink (UnlinkRequest) returns (UnlinkResponse) {}
 }
 
 message ReleasedirRequest {
@@ -131,5 +132,13 @@ message CreatRequest {
 }
 
 message CreatResponse {
+  int32 errnum = 1;
+}
+
+message UnlinkRequest {
+  string path = 1;
+}
+
+message UnlinkResponse {
   int32 errnum = 1;
 }
