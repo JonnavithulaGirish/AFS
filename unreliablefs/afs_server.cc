@@ -31,6 +31,7 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <mutex>
+#include <fstream>
 
 #ifdef BAZEL_BUILD
 #include "examples/protos/helloworld.grpc.pb.h"
@@ -78,6 +79,8 @@ using namespace std;
 mutex mtx;
 mutex clsmtx;
 
+string consistency_winner_file = "winner";
+
 string serverBaseDir("/users/Girish/serverfs/");
 
 // Logic and data behind the server's behavior.
@@ -107,7 +110,7 @@ class AfsServiceImpl final : public AFS::Service {
   Status Open(ServerContext* context, const OpenRequest* request, ServerWriter<OpenResponse>* writer) override {
     string path = serverBaseDir + request->path();
     std::cout<< "Open Got Called with path:: "<< path <<std::endl;
-    //mtx.lock();
+    mtx.lock();
     cout<< "acquired lock "<<endl;
     int fd = open(path.c_str(), O_CREAT|O_RDWR, 0777);
 
@@ -121,7 +124,7 @@ class AfsServiceImpl final : public AFS::Service {
       OpenResponse reply;
       reply.set_errnum(errno);
       writer->Write(reply);
-      //mtx.unlock();
+      mtx.unlock();
       return Status::OK;
     }
     cout<< "open:: lstat res::  "<<ret<<endl;
@@ -142,7 +145,7 @@ class AfsServiceImpl final : public AFS::Service {
         OpenResponse reply;
         reply.set_errnum(errno);
         writer->Write(reply);
-        //mtx.unlock();
+        mtx.unlock();
         return Status::OK;
       }
       offset += ret;
@@ -155,7 +158,7 @@ class AfsServiceImpl final : public AFS::Service {
     fsync(fd);
     close(fd);
 
-    //mtx.unlock();
+    mtx.unlock();
     cout<< "released lock "<<endl;
 
     return Status::OK;
@@ -167,8 +170,12 @@ class AfsServiceImpl final : public AFS::Service {
       int flag = 1;
       int offset = 0;
       int fd;
-     std::cout<< "Close Got Called with path:: " <<std::endl;
+      string suffix;
 
+      char clientid = '*';
+
+     std::cout<< "Close Got Called with path:: " <<std::endl;
+      ofstream logEvents("~/logs/serverevents", fstream::app);
       auto microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
       //time_t seconds = time (NULL);
       string originalPath,tempPath;
@@ -183,6 +190,16 @@ class AfsServiceImpl final : public AFS::Service {
             reply->set_errnum(errno);
             return Status::OK;   
           }
+
+          if (request.path() == consistency_winner_file)
+          {
+            microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            if (request.filedata().size() > 0)
+              clientid = request.filedata()[0];
+            mtx.lock();
+            logEvents << microseconds_since_epoch << " 1 " << clientid << endl; 
+            mtx.unlock();
+          }
         }
         //cout << "close got this filedata:: "<< request.filedata().c_str() << endl;
         int ret = pwrite(fd, request.filedata().c_str(), request.filedata().size(), offset);
@@ -195,7 +212,7 @@ class AfsServiceImpl final : public AFS::Service {
         offset+=ret;
       }
       // string tempPath = originalPath+to_string(microseconds_since_epoch);
-      // mtx.lock();
+      mtx.lock();
 
       fsync(fd);
 
@@ -209,11 +226,18 @@ class AfsServiceImpl final : public AFS::Service {
 
   
       close(fd);
+
+      if (request.path() == consistency_winner_file)
+      {
+        microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        logEvents << microseconds_since_epoch << " 2 " << clientid << endl;
+      }
       cout << "close successful " << endl; 
       //Send File Data
       reply->set_errnum(1);  
-      // mtx.unlock();
-      
+      mtx.unlock();
+
+      logEvents.close();
       
       return Status::OK;    
   }

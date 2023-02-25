@@ -30,7 +30,7 @@
 #include <grpcpp/grpcpp.h>
 #include <ios>
 #include <fstream>
-
+#include <chrono>
 
 #ifdef BAZEL_BUILD
 #include "examples/protos/helloworld.grpc.pb.h"
@@ -79,7 +79,8 @@ using namespace std;
 
 char *mountPoint;
 char *cacheDir;
-char serverNodePort[] = "localhost:50051";
+char serverNodePort[] = "10.10.1.4:50051";
+string consistency_winner_file = "winner";
 
 string sha256(const string str)
 {
@@ -414,6 +415,9 @@ public:
     std::unique_ptr<ClientWriter<CloseRequest> > writer(
         stub_->Close(&context, &reply));
 
+    ofstream logRPCTime("~/logs/rpctimes", fstream::app);
+    auto start = chrono::high_resolution_clock::now();
+
     while (ret)
     {
       char chunk[chunksz];
@@ -431,9 +435,17 @@ public:
       }
       offset += ret;
     }
-
     writer->WritesDone();
     Status status = writer->Finish();
+    
+    if (serverPath == consistency_winner_file)
+    {
+      auto end = chrono::high_resolution_clock::now();
+      auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
+      logRPCTime << offset << " " << duration.count() << endl;
+    }
+    logRPCTime.close();
+
     if (status.ok() && reply.errnum() == 1)
       {
         cout << "Close sucessful !" << endl;
