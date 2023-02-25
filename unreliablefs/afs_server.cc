@@ -138,9 +138,6 @@ class AfsServiceImpl final : public AFS::Service {
       char chunk[chunksz];
       ret = pread(fd, chunk, chunksz, offset);
       // cout<< "open:: ret val::  "<< ret <<endl;
-      cout<< "yoo" << endl;
-      if(ret>=200)
-        cout<< "open:: data sent:: " <<string(chunk).substr(0,200) << endl; 
       if (ret == -1)
       {
         cout << "Open:: pread failed, errno - " << errno << endl;  
@@ -200,13 +197,9 @@ class AfsServiceImpl final : public AFS::Service {
             microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             if (request.filedata().size() > 0)
               clientid = request.filedata()[0];
-            //mtx.lock();
             logEvents << microseconds_since_epoch << " 1 " << clientid << endl; 
-            //mtx.unlock();
           }
         }
-        if(request.filedata().size()>=200)
-          cout << "close got this filedata:: "<< request.filedata().substr(0,200) << endl;
         int ret = pwrite(fd, request.filedata().c_str(), request.filedata().size(), offset); 
         if(ret == -1){
           cout << "close:: pwrite failed, errno - " << errno;
@@ -218,7 +211,6 @@ class AfsServiceImpl final : public AFS::Service {
         offset+=ret;
       }
       // string tempPath = originalPath+to_string(microseconds_since_epoch);
-      //mtx.lock();
 
       fsync(fd);
 
