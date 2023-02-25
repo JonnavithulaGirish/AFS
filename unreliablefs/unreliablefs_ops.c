@@ -267,6 +267,7 @@ int unreliable_link(const char *oldpath, const char *newpath)
 
 int unreliable_chmod(const char *path, mode_t mode)
 {
+    return 0;
     printf("In unreliable chmod \n");
     int ret = error_inject(path, OP_CHMOD);
     if (ret == -ERRNO_NOOP) {
@@ -285,6 +286,7 @@ int unreliable_chmod(const char *path, mode_t mode)
 
 int unreliable_chown(const char *path, uid_t owner, gid_t group)
 {
+    return 0;
     printf("In unreliable chown \n");
     int ret = error_inject(path, OP_CHOWN);
     if (ret == -ERRNO_NOOP) {
@@ -366,13 +368,13 @@ int unreliable_read(const char *path, char *buf, size_t size, off_t offset,
     }
 
     if (fd == -1) {
-        //printf("yo error");
+        printf("yo read error");
 	    return -errno;
     }
 
     ret = pread(fd, buf, size, offset);
     if (ret == -1) {
-        //printf("yo error 2 %d\n",fd);
+        printf("yo read error fd:: %d, errno:: %d\n",fd,errno);
         ret = -errno;
     }
 
@@ -412,14 +414,14 @@ int unreliable_write(const char *path, const char *buf, size_t size,
 
     ret = pwrite(fd, buf, size, offset);
     if (ret == -1) {
-        //printf("write error");
+         printf("yo write error fd:: %d, errno:: %d\n",fd,errno);
         ret = -errno;
     }
 
     if(fi == NULL) {
         close(fd);
     }
-    //printf("write successfull");
+    printf("write successfull");
     return ret;
 }
 
@@ -456,11 +458,11 @@ int unreliable_flush(const char *path, struct fuse_file_info *fi)
     //     return -errno;
     // }
     //printf("unreliable_flush\n");
-    ret = afsClose(fi->fh);
+    // ret = afsClose(fi->fh);
 
-    if (ret == -1) {
-        return -errno;
-    }
+    // if (ret == -1) {
+    //     return -errno;
+    // }
 
     return 0;
 }
@@ -480,11 +482,11 @@ int unreliable_release(const char *path, struct fuse_file_info *fi)
     //     return -errno;
     // }
     //printf("unreliable_release\n");
-    // ret = afsClose(fi->fh);
-    // if (ret == -1) {
-    //     //printf("errno %d\n", errno);
-    //     return -errno;
-    // }
+    ret = afsClose(fi->fh);
+    if (ret == -1) {
+        //printf("errno %d\n", errno);
+        return -errno;
+    }
 
     return 0;    
 }
@@ -932,6 +934,7 @@ int unreliable_fallocate(const char *path, int mode,
 #ifdef HAVE_UTIMENSAT
 int unreliable_utimens(const char *path, const struct timespec ts[2])
 {
+    return 0;
     int ret = error_inject(path, OP_UTIMENS);
     if (ret == -ERRNO_NOOP) {
         return 0;

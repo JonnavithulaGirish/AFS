@@ -181,7 +181,7 @@ public:
     cout << "Open call at " << path << endl;
     string localCacheFilePath = m_cacheDir + sha256(path);
 
-    int bFetchFromServer = false;
+    bool bFetchFromServer = false;
 
     struct stat serverbuf;
     int ret = GetAttr(path, &serverbuf);
@@ -191,8 +191,9 @@ public:
       // 1 - if flag is O_CREAT, we create a file on server and on cache and return cache fd
       // 2 - flag does not have CREAT, return -1, set errno = ENOENT
 
-      if (flags & O_CREAT == O_CREAT)
+      if ((flags & O_CREAT) == O_CREAT)
       {
+        cout<<"hu "<<endl;
         bFetchFromServer = true;
       }
       else 
@@ -240,9 +241,9 @@ public:
 
     if (bFetchFromServer)
     {
+       int offset = 0;
       // update/ create local cache
-      int fd = open(localCacheFilePath.c_str(), flags, 0777);
-      int offset = 0;
+      int fd = open(localCacheFilePath.c_str(),O_CREAT | O_RDWR, 0777);
       if (fd == -1)
       {
         cout << "Open:: opening local cache failed, errno - " << errno << endl;
@@ -256,8 +257,7 @@ public:
       request.set_path(path);
       request.set_flags(flags);
 
-      std::unique_ptr<ClientReader<OpenResponse> > reader(
-      stub_->Open(&context, request));
+      std::unique_ptr<ClientReader<OpenResponse> > reader(stub_->Open(&context, request));
       while (reader->Read(&reply)) {
         if (reply.errnum() != 1)
         {
@@ -277,6 +277,7 @@ public:
 
       if (status.ok() && reply.errnum() == 1)
       {
+        fsync(fd);
         cout << "Open sucessful !" << endl;
         fileMap[fd] = path;
         return fd;
@@ -378,21 +379,25 @@ public:
   //   }
   // }
 
-  int Close(int fh)
+  int Close(int fd )
   {
-    if (fileMap.find(fh) == fileMap.end())
+    ClientContext context;
+    if (fileMap.find(fd) == fileMap.end())
     {
       cout << "Close:: incorrect fd " << endl;
       errno = ENOENT;
       return -1;
     }
     string serverPath = fileMap[fd];
+    CloseRequest req;
+    CloseResponse reply;
+    req.set_path(serverPath);
     cout << "Close called at path and fd" << serverPath << ", " << fd << endl;
     int ret = 1;
     int chunksz = 4000, offset = 0;
 
     std::unique_ptr<ClientWriter<CloseRequest> > writer(
-        stub_->Close(&context, &stats));
+        stub_->Close(&context, &reply));
 
     while (ret)
     {
@@ -403,8 +408,6 @@ public:
         cout << "Close:: pread failed errno - " << errno << endl;
         return -1;
       }
-      CloseRequest req;
-      req.set_path(serverPath);
       req.set_filedata((char*)chunk, ret);
       if (!writer->Write(req))
       {
@@ -414,7 +417,7 @@ public:
       offset += ret;
     }
 
-    write->WritesDone();
+    writer->WritesDone();
     Status status = writer->Finish();
     if (status.ok() && reply.errnum() == 1)
       {
@@ -425,7 +428,7 @@ public:
       }
       else 
       {
-        close(fd);
+        // close(fd);
         errno = reply.errnum();
         cout << "Close failed on server with error - " << errno << endl;
         cout << "Error code , Error msg from grpc if any" << endl;

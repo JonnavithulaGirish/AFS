@@ -44,7 +44,7 @@ using grpc::ServerContext;
 using grpc::Status;
 using grpc::ServerReaderWriter;
 using grpc::ServerWriter;
-
+using grpc::ServerReader;
 using FS::AFS;
 using FS::GetAttrRequest;
 using FS::GetAttrResponse;
@@ -76,6 +76,7 @@ using FS::UnlinkResponse;
 using namespace std;
 
 mutex mtx;
+mutex clsmtx;
 
 string serverBaseDir("/users/Girish/serverfs/");
 
@@ -107,19 +108,23 @@ class AfsServiceImpl final : public AFS::Service {
     string path = serverBaseDir + request->path();
     std::cout<< "Open Got Called with path:: "<< path <<std::endl;
     mtx.lock();
+    cout<< "acquired lock "<<endl;
+    int fd = open(path.c_str(), O_CREAT|O_RDWR, 0777);
 
-    int fd = open(request->path().c_str(), request->flags(), 0777);
-
+    cout<<"Open Flags : "<<request->flags()<<endl;
+    cout<< "open suss fd "<< fd << endl;
     struct stat statbuf;
-    int ret = lstat(request->path().c_str(), &statbuf);
+    int ret = lstat(path.c_str(), &statbuf);
     if (ret == -1)
     {
       cout << "Open:: lstat failed, errno - " << errno << endl;
       OpenResponse reply;
       reply.set_errnum(errno);
       writer->Write(reply);
+      mtx.unlock();
       return Status::OK;
     }
+    cout<< "open:: lstat res::  "<<ret<<endl;
 
     unsigned int filesz = statbuf.st_size;
     int chunksz = 4000;
@@ -129,12 +134,15 @@ class AfsServiceImpl final : public AFS::Service {
     {
       char chunk[chunksz];
       ret = pread(fd, chunk, chunksz, offset);
+      cout<< "open:: ret val::  "<< ret <<endl;
+      cout<< "open:: data sent:: " <<chunk << endl; 
       if (ret == -1)
       {
         cout << "Open:: pread failed, errno - " << errno << endl;  
         OpenResponse reply;
         reply.set_errnum(errno);
         writer->Write(reply);
+        mtx.unlock();
         return Status::OK;
       }
       offset += ret;
@@ -142,18 +150,72 @@ class AfsServiceImpl final : public AFS::Service {
       reply.set_errnum(1);
       reply.set_filedata((char *)chunk, ret);
       writer->Write(reply);
+
     }
     fsync(fd);
     close(fd);
 
     mtx.unlock();
+    cout<< "released lock "<<endl;
 
     return Status::OK;
   }
 
   Status Close(ServerContext* context, ServerReader<CloseRequest>* reader, CloseResponse* reply) override
   {
-    
+      CloseRequest request;
+      int flag = 1;
+      int offset = 0;
+      int fd;
+     std::cout<< "Close Got Called with path:: " <<std::endl;
+
+      auto microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+      //time_t seconds = time (NULL);
+      string originalPath,tempPath;
+      while (reader->Read(&request)) {
+        if(flag == 1){
+          flag = 0;
+          originalPath = (serverBaseDir+request.path()).c_str();
+          tempPath = originalPath+to_string(microseconds_since_epoch);
+          fd = open(tempPath.c_str(), O_CREAT|O_RDWR, 0777);
+          if(fd == -1){
+            cout<<"Close :: open failed"<<endl;
+            reply->set_errnum(errno);
+            return Status::OK;   
+          }
+        }
+        cout << "close got this filedata:: "<< request.filedata().c_str() << endl;
+        int ret = pwrite(fd, request.filedata().c_str(), request.filedata().size(), offset);
+        if(ret == -1){
+          cout << "close:: pwrite failed, errno - " << errno;
+          reply->set_errnum(errno);
+          unlink(tempPath.c_str());
+          return Status::OK;   
+        }
+        offset+=ret;
+      }
+      // string tempPath = originalPath+to_string(microseconds_since_epoch);
+      mtx.lock();
+
+      fsync(fd);
+
+      cout << "renaming the file::  " << originalPath.c_str() << endl; 
+      if(rename(tempPath.c_str(), originalPath.c_str()) == -1){
+        //return error status on failure
+        cout << "renaming failed " << originalPath << tempPath << endl; 
+        reply->set_errnum(errno);
+        return Status::OK;
+      }
+
+  
+      close(fd);
+      cout << "close successful " << endl; 
+      //Send File Data
+      reply->set_errnum(1);  
+      mtx.unlock();
+      
+      
+      return Status::OK;    
   }
 
 
@@ -221,52 +283,52 @@ class AfsServiceImpl final : public AFS::Service {
     return Status::OK;
   }
 
-  Status Close(ServerContext* context, const CloseRequest* request,
-                  CloseResponse* reply) override {
+  // Status Close(ServerContext* context, const CloseRequest* request,
+                  // CloseResponse* reply) override {
     
-    string path = serverBaseDir + request->path();
-    std::cout<< "Close Got Called with path:: "<< path << std::endl;
+    // string path = serverBaseDir + request->path();
+    // std::cout<< "Close Got Called with path:: "<< path << std::endl;
 
-    auto microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    //time_t seconds = time (NULL);
-    string tempPath(path + std::to_string(microseconds_since_epoch));
-    //cout << "Creating temp file " << tempPath << endl; 
-    //Open File 
-    int fd = open(tempPath.c_str(), O_CREAT | O_RDWR, 0777);
-    //cout << "Creating temp file status :: " << fd << endl; 
-    if (fd == -1) {
-      //return error status on failure
-      reply->set_errnum(errno);
-	    return Status::OK;
-    }
+    // auto microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    // //time_t seconds = time (NULL);
+    // string tempPath(path + std::to_string(microseconds_since_epoch));
+    // //cout << "Creating temp file " << tempPath << endl; 
+    // //Open File 
+    // int fd = open(tempPath.c_str(), O_CREAT | O_RDWR, 0777);
+    // //cout << "Creating temp file status :: " << fd << endl; 
+    // if (fd == -1) {
+    //   //return error status on failure
+    //   reply->set_errnum(errno);
+	  //   return Status::OK;
+    // }
 
-    //cout << "Writing the following data::  " << request->filedata() << endl; 
-    //Write File
-    int ret = pwrite(fd, request->filedata().c_str(), request->filedata().size(), 0);
+    // //cout << "Writing the following data::  " << request->filedata() << endl; 
+    // //Write File
+    // int ret = pwrite(fd, request->filedata().c_str(), request->filedata().size(), 0);
     //cout << "write status::  " << ret << endl; 
-    if (ret == -1) {
-      //return error status on failure
-      reply->set_errnum(errno);
-	    return Status::OK;
-    }
-    fsync(fd);
+  //   if (ret == -1) {
+  //     //return error status on failure
+  //     reply->set_errnum(errno);
+	//     return Status::OK;
+  //   }
+  //   fsync(fd);
 
-    //cout << "renaming the file::  " << path.c_str() << endl; 
-    if(rename(tempPath.c_str(), path.c_str()) == -1){
-      //return error status on failure
-      cout << "renaming failed " << endl; 
-      reply->set_errnum(errno);
-	    return Status::OK;
-    }
+  //   //cout << "renaming the file::  " << path.c_str() << endl; 
+  //   if(rename(tempPath.c_str(), path.c_str()) == -1){
+  //     //return error status on failure
+  //     cout << "renaming failed " << endl; 
+  //     reply->set_errnum(errno);
+	//     return Status::OK;
+  //   }
 
     
-    close(fd);
-    cout << "close successful " << endl; 
-    //Send File Data
-    reply->set_errnum(1);
+  //   close(fd);
+  //   cout << "close successful " << endl; 
+  //   //Send File Data
+  //   reply->set_errnum(1);
     
-    return Status::OK;
-  }
+  //   return Status::OK;
+  // }
 
    Status Mkdir(ServerContext* context, const MkdirRequest* request, MkdirResponse* response) override
   {
@@ -419,7 +481,7 @@ class AfsServiceImpl final : public AFS::Service {
     string path = serverBaseDir + request->path();
     std::cout<< "Unlink Got Called with path :: "<< path << std::endl;
 
-    int ret = unlink(request->path().c_str());
+    int ret = unlink(path.c_str());
     if (ret == -1)
     {
       response->set_errnum(errno);
