@@ -417,7 +417,7 @@ int unreliable_write(const char *path, const char *buf, size_t size,
          printf("yo write error fd:: %d, errno:: %d\n",fd,errno);
         ret = -errno;
     }
-
+    afsUpdateIsDirtyFlag(fd);
     if(fi == NULL) {
         close(fd);
     }

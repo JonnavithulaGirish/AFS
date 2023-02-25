@@ -106,6 +106,7 @@ private:
   string m_mountPoint;
   string m_cacheDir;
   std::unordered_map <int,std::string> fileMap;
+  unordered_map<int,bool> isDirtyFileMap;
   //std::unordered_map <uint64_t, std::string> dirMap;
 
   AfsClientSingleton()
@@ -245,6 +246,7 @@ public:
           }
           cout<< "Open:: (file on server and client but client latest) Using file in local cache with fd ::"<< fd << endl;
           fileMap[fd] = path;
+          isDirtyFileMap[fd]=false;
           return fd;
         }
         else
@@ -296,6 +298,7 @@ public:
         fsync(fd);
         cout << "Open sucessful !" << endl;
         fileMap[fd] = path;
+        isDirtyFileMap[fd]= false;
         return fd;
       }
       else 
@@ -398,72 +401,81 @@ public:
   int Close(int fd )
   {
     ClientContext context;
-    if (fileMap.find(fd) == fileMap.end())
+    if ((fileMap.find(fd) == fileMap.end()) || (isDirtyFileMap.find(fd)==isDirtyFileMap.end()))
     {
       cout << "Close:: incorrect fd " << endl;
       errno = ENOENT;
       return -1;
     }
-    string serverPath = fileMap[fd];
-    CloseRequest req;
-    CloseResponse reply;
-    req.set_path(serverPath);
-    cout << "Close called at path and fd" << serverPath << ", " << fd << endl;
-    int ret = 1;
-    int chunksz = 4000;
+    if(isDirtyFileMap[fd]){
+      string serverPath = fileMap[fd];
+      CloseRequest req;
+      CloseResponse reply;
+      req.set_path(serverPath);
+      cout << "Close called at path and fd" << serverPath << ", " << fd << endl;
+      int ret = 1;
+      int chunksz = 4000;
     unsigned long long offset = 0;
 
-    std::unique_ptr<ClientWriter<CloseRequest> > writer(
-        stub_->Close(&context, &reply));
+      std::unique_ptr<ClientWriter<CloseRequest> > writer(
+          stub_->Close(&context, &reply));
 
     ofstream logRPCTime("/users/Girish/logs/rpctimes", fstream::app);
     auto start = chrono::high_resolution_clock::now();
 
-    while (ret)
-    {
-      char chunk[chunksz];
-      cout<< "close offset:: "<< offset<<endl;
+      while (ret)
+      {
+        char chunk[chunksz];
+        cout<< "close offset:: "<< offset<<endl;
       ret = pread(fd, chunk, chunksz, offset);
-      if (ret == -1)
-      {
-        cout << "Close:: pread failed errno - " << errno << endl;
-        return -1;
+        if (ret == -1)
+        {
+          cout << "Close:: pread failed errno - " << errno << endl;
+          return -1;
+        }
+        req.set_filedata((char*)chunk, ret);
+        if (!writer->Write(req))
+        {
+          cout << "Close:: broken stream" << endl;
+          return -1;
+        }
+        offset += ret;
       }
-      req.set_filedata((char*)chunk, ret);
-      if (!writer->Write(req))
+      writer->WritesDone();
+      Status status = writer->Finish();
+      
+      if (serverPath == consistency_winner_file)
       {
-        cout << "Close:: broken stream" << endl;
-        return -1;
+        auto end = chrono::high_resolution_clock::now();
+        auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
+        logRPCTime << offset << " " << duration.count() << endl;
       }
-      offset += ret;
-    }
-    writer->WritesDone();
-    Status status = writer->Finish();
-    
-    if (serverPath == consistency_winner_file)
-    {
-      auto end = chrono::high_resolution_clock::now();
-      auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-      logRPCTime << offset << " " << duration.count() << endl;
-    }
-    logRPCTime.close();
+      logRPCTime.close();
 
-    if (status.ok() && reply.errnum() == 1)
-      {
-        cout << "Close sucessful !" << endl;
-        close(fd);
-        fileMap.erase(fd);
-        return 0;
-      }
-      else 
-      {
-        // close(fd);
-        errno = reply.errnum();
-        cout << "Close failed on server with error - " << errno << endl;
-        cout << "Error code , Error msg from grpc if any" << endl;
-        cout << status.error_code() << ": " << status.error_message() << std::endl;
-        return -1;
-      }
+      if (status.ok() && reply.errnum() == 1)
+        {
+          cout << "Close sucessful !" << endl;
+          close(fd);
+          fileMap.erase(fd);
+          isDirtyFileMap.erase(fd);
+          return 0;
+        }
+        else 
+        {
+          // close(fd);
+          errno = reply.errnum();
+          cout << "Close failed on server with error - " << errno << endl;
+          cout << "Error code , Error msg from grpc if any" << endl;
+          cout << status.error_code() << ": " << status.error_message() << std::endl;
+          return -1;
+        }
+    }
+    else{
+      cout<< "close:: didnot got to server" << endl;
+      close(fd);
+      fileMap.erase(fd);
+      isDirtyFileMap.erase(fd);
+    }
   }
 
   // int Close(int fh){
@@ -808,6 +820,7 @@ public:
         return -1;
       }
       fileMap[fd] = path;
+      isDirtyFileMap[fd] = true;
 
       return fd;
     }
@@ -844,6 +857,10 @@ public:
       cout << status.error_code() << ": " << status.error_message() << std::endl;
       return -1;
     }
+  }
+
+  void updateIsDirtyFlag(int fd){
+    isDirtyFileMap[fd]=true;
   }
 };
 
@@ -926,4 +943,10 @@ extern "C" int afsUnlink(const char *path)
 {
   AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
   return afsClient->Unlink(string(path));
+}
+
+extern "C" void afsUpdateIsDirtyFlag(int fd)
+{
+  AfsClientSingleton *afsClient = AfsClientSingleton::getInstance(std::string(serverNodePort));
+  afsClient->updateIsDirtyFlag(fd);
 }
