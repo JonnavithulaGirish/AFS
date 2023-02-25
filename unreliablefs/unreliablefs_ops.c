@@ -753,6 +753,7 @@ void unreliable_destroy(void *private_data)
 
 int unreliable_access(const char *path, int mode)
 {
+    return 0;
     printf("In unreliable access @path %s\n", path);
 
     int ret = error_inject(path, OP_ACCESS);

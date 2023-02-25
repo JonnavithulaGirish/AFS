@@ -107,7 +107,7 @@ class AfsServiceImpl final : public AFS::Service {
   Status Open(ServerContext* context, const OpenRequest* request, ServerWriter<OpenResponse>* writer) override {
     string path = serverBaseDir + request->path();
     std::cout<< "Open Got Called with path:: "<< path <<std::endl;
-    mtx.lock();
+    //mtx.lock();
     cout<< "acquired lock "<<endl;
     int fd = open(path.c_str(), O_CREAT|O_RDWR, 0777);
 
@@ -121,7 +121,7 @@ class AfsServiceImpl final : public AFS::Service {
       OpenResponse reply;
       reply.set_errnum(errno);
       writer->Write(reply);
-      mtx.unlock();
+      //mtx.unlock();
       return Status::OK;
     }
     cout<< "open:: lstat res::  "<<ret<<endl;
@@ -142,7 +142,7 @@ class AfsServiceImpl final : public AFS::Service {
         OpenResponse reply;
         reply.set_errnum(errno);
         writer->Write(reply);
-        mtx.unlock();
+        //mtx.unlock();
         return Status::OK;
       }
       offset += ret;
@@ -155,7 +155,7 @@ class AfsServiceImpl final : public AFS::Service {
     fsync(fd);
     close(fd);
 
-    mtx.unlock();
+    //mtx.unlock();
     cout<< "released lock "<<endl;
 
     return Status::OK;
@@ -184,7 +184,7 @@ class AfsServiceImpl final : public AFS::Service {
             return Status::OK;   
           }
         }
-        cout << "close got this filedata:: "<< request.filedata().c_str() << endl;
+        //cout << "close got this filedata:: "<< request.filedata().c_str() << endl;
         int ret = pwrite(fd, request.filedata().c_str(), request.filedata().size(), offset);
         if(ret == -1){
           cout << "close:: pwrite failed, errno - " << errno;
@@ -195,7 +195,7 @@ class AfsServiceImpl final : public AFS::Service {
         offset+=ret;
       }
       // string tempPath = originalPath+to_string(microseconds_since_epoch);
-      mtx.lock();
+      // mtx.lock();
 
       fsync(fd);
 
@@ -212,7 +212,7 @@ class AfsServiceImpl final : public AFS::Service {
       cout << "close successful " << endl; 
       //Send File Data
       reply->set_errnum(1);  
-      mtx.unlock();
+      // mtx.unlock();
       
       
       return Status::OK;    

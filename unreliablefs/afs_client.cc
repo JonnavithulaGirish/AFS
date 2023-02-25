@@ -265,7 +265,9 @@ public:
           cout << "Open failed at server, errno -  " << errno << endl;
           return -1;
         }
+        
         int ret = pwrite(fd, reply.filedata().c_str(), reply.filedata().size(), offset);
+        cout << "Open:: server sent data size- " << reply.filedata().size() << endl;
         if (ret == -1)
         {
           cout << "Open:: pwrite failed, errno - " << errno;
