@@ -163,6 +163,19 @@ public:
     if (status.ok() && reply.errnum() == 1)
     {
       memcpy((char *)buf, reply.statbuf().c_str(), sizeof(struct stat));
+
+      // return local file stat if cache copy is latest
+      struct stat localbuf;
+      string localCacheFilePath = m_cacheDir+sha256(path);
+      int ret = lstat(localCacheFilePath.c_str(), &localbuf);
+      if (ret != -1)
+      {
+        if ((buf->st_mtim.tv_sec < localbuf.st_mtim.tv_sec) || (buf->st_mtim.tv_sec == localbuf.st_mtim.tv_sec && buf->st_mtim.tv_nsec <= localbuf.st_mtim.tv_nsec))
+        {
+          memcpy((char *)buf, &localbuf, sizeof(struct stat));
+        }
+      }
+
       return 1;
     }
     else
