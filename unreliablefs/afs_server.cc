@@ -138,7 +138,9 @@ class AfsServiceImpl final : public AFS::Service {
       char chunk[chunksz];
       ret = pread(fd, chunk, chunksz, offset);
       // cout<< "open:: ret val::  "<< ret <<endl;
-      // cout<< "open:: data sent:: " <<chunk << endl; 
+      cout<< "yoo" << endl;
+      if(ret>=200)
+        cout<< "open:: data sent:: " <<string(chunk).substr(0,200) << endl; 
       if (ret == -1)
       {
         cout << "Open:: pread failed, errno - " << errno << endl;  
@@ -179,6 +181,7 @@ class AfsServiceImpl final : public AFS::Service {
       auto microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
       //time_t seconds = time (NULL);
       string originalPath,tempPath;
+      mtx.lock();
       while (reader->Read(&request)) {
         if(flag == 1){
           flag = 0;
@@ -188,6 +191,7 @@ class AfsServiceImpl final : public AFS::Service {
           if(fd == -1){
             cout<<"Close :: open failed"<<endl;
             reply->set_errnum(errno);
+            mtx.unlock();
             return Status::OK;   
           }
 
@@ -196,23 +200,25 @@ class AfsServiceImpl final : public AFS::Service {
             microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             if (request.filedata().size() > 0)
               clientid = request.filedata()[0];
-            mtx.lock();
+            //mtx.lock();
             logEvents << microseconds_since_epoch << " 1 " << clientid << endl; 
-            mtx.unlock();
+            //mtx.unlock();
           }
         }
-        //cout << "close got this filedata:: "<< request.filedata().c_str() << endl;
-        int ret = pwrite(fd, request.filedata().c_str(), request.filedata().size(), offset);
+        if(request.filedata().size()>=200)
+          cout << "close got this filedata:: "<< request.filedata().substr(0,200) << endl;
+        int ret = pwrite(fd, request.filedata().c_str(), request.filedata().size(), offset); 
         if(ret == -1){
           cout << "close:: pwrite failed, errno - " << errno;
           reply->set_errnum(errno);
           unlink(tempPath.c_str());
+          mtx.unlock();
           return Status::OK;   
         }
         offset+=ret;
       }
       // string tempPath = originalPath+to_string(microseconds_since_epoch);
-      mtx.lock();
+      //mtx.lock();
 
       fsync(fd);
 
@@ -221,6 +227,7 @@ class AfsServiceImpl final : public AFS::Service {
         //return error status on failure
         cout << "renaming failed " << originalPath << tempPath << endl; 
         reply->set_errnum(errno);
+        mtx.unlock();
         return Status::OK;
       }
 
