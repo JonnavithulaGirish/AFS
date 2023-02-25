@@ -131,14 +131,14 @@ class AfsServiceImpl final : public AFS::Service {
 
     unsigned int filesz = statbuf.st_size;
     int chunksz = 4000;
-    int offset = 0;
+    unsigned long long offset = 0;
     ret = 1;
     while (ret)
     {
       char chunk[chunksz];
       ret = pread(fd, chunk, chunksz, offset);
-      cout<< "open:: ret val::  "<< ret <<endl;
-      cout<< "open:: data sent:: " <<chunk << endl; 
+      // cout<< "open:: ret val::  "<< ret <<endl;
+      // cout<< "open:: data sent:: " <<chunk << endl; 
       if (ret == -1)
       {
         cout << "Open:: pread failed, errno - " << errno << endl;  
@@ -168,7 +168,7 @@ class AfsServiceImpl final : public AFS::Service {
   {
       CloseRequest request;
       int flag = 1;
-      int offset = 0;
+      unsigned long long offset = 0;
       int fd;
       string suffix;
 

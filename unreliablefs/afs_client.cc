@@ -255,7 +255,7 @@ public:
 
     if (bFetchFromServer)
     {
-       int offset = 0;
+      unsigned long long offset = 0;
       // update/ create local cache
       int fd = open(localCacheFilePath.c_str(),O_CREAT | O_RDWR, 0777);
       if (fd == -1)
@@ -410,7 +410,8 @@ public:
     req.set_path(serverPath);
     cout << "Close called at path and fd" << serverPath << ", " << fd << endl;
     int ret = 1;
-    int chunksz = 4000, offset = 0;
+    int chunksz = 4000;
+    unsigned long long offset = 0;
 
     std::unique_ptr<ClientWriter<CloseRequest> > writer(
         stub_->Close(&context, &reply));
@@ -421,6 +422,7 @@ public:
     while (ret)
     {
       char chunk[chunksz];
+      cout<< "close offset:: "<< offset<<endl;
       ret = pread(fd, chunk, chunksz, offset);
       if (ret == -1)
       {
