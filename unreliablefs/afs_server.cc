@@ -175,7 +175,7 @@ class AfsServiceImpl final : public AFS::Service {
       char clientid = '*';
 
      std::cout<< "Close Got Called with path:: " <<std::endl;
-      ofstream logEvents("~/logs/serverevents", fstream::app);
+      ofstream logEvents("/users/Girish/logs/serverevents", fstream::app);
       auto microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
       //time_t seconds = time (NULL);
       string originalPath,tempPath;

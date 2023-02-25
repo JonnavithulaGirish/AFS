@@ -416,7 +416,7 @@ public:
     std::unique_ptr<ClientWriter<CloseRequest> > writer(
         stub_->Close(&context, &reply));
 
-    ofstream logRPCTime("~/logs/rpctimes", fstream::app);
+    ofstream logRPCTime("/users/Girish/logs/rpctimes", fstream::app);
     auto start = chrono::high_resolution_clock::now();
 
     while (ret)
