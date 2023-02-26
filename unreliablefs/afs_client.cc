@@ -847,6 +847,13 @@ public:
     if (status.ok() && reply.errnum() == 1)
     { 
       // TODO: erase local cache copy
+      string localCacheFilePath = m_cacheDir + sha256(path);
+      int ret = unlink(localCacheFilePath.c_str());
+      if (ret == -1)
+      {
+        cout << "unlink :: local cache copy deletion failed, errno - " << errno << endl;
+        return -1;
+      }
       return 0;
     }
     else
