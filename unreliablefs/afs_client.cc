@@ -259,7 +259,7 @@ public:
     {
       unsigned long long offset = 0;
       // update/ create local cache
-      int fd = open(localCacheFilePath.c_str(),O_CREAT | O_RDWR, 0777);
+      int fd = open(localCacheFilePath.c_str(),O_CREAT | O_RDWR | O_TRUNC, 0777);
       if (fd == -1)
       {
         cout << "Open:: opening local cache failed, errno - " << errno << endl;
