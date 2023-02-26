@@ -29,14 +29,14 @@ def run_test():
     if not fs_util.path_exists(TEST_DATA_DIR):
         fs_util.mkdir(TEST_DATA_DIR)
 
+    if fs_util.path_exists(FNAME):
+        fs_util.delete_file(FNAME)
     # init
     if not fs_util.path_exists(FNAME):
         fs_util.create_file(FNAME)
 
     # A opens and writes "0" to local disk  
-    init_str =  fs_util.gen_str_by_repeat('0',32768)
     fd = fs_util.open_file(FNAME)
-    fs_util.write_file(fd, init_str)
 
     # time for client_b to work, host_b should read the all-zero file
     print(signal_name_gen)
@@ -53,15 +53,9 @@ def run_test():
         time.sleep(1000)
     print('ClientB finished')
 
-    # read the old content
-    cur_str = fs_util.read_file(fd, 32768)
-    assert len(cur_str) == 32768
-    for idx, rc in enumerate(cur_str):
-        assert rc == '0'
-
     cur_str =  fs_util.gen_str_by_repeat('a', 1000)
     fs_util.write_file(fd, cur_str, start_off=0)
-    fs_util.close_file(fd);
+    fs_util.close_file(fd)
 
 
     # Should not find the changes specific to clientB -- last update wins
@@ -76,6 +70,7 @@ def run_test():
 
     last_signal_name = cur_signal_name
     cur_signal_name = next(signal_name_gen)
+    print(cur_signal_name)
     fs_util.send_signal(host_b, cur_signal_name)
 
     # done

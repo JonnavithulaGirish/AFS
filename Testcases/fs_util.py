@@ -114,8 +114,8 @@ def start_another_client(host: str, test_case: int, client_id: str,
     send_signal(host, signal_fname)
     signal_exists = (not poll_signal_remove(host, signal_fname))
     assert signal_exists
-    script_name = f'/users/Girish/test{test_case}_client{client_id.upper()}.py'
-    ssh_cmd = f'source ~/739p1.env && python3 {script_name}'
+    script_name = f'/users/Girish/AFS/Testcases/test{test_case}_client{client_id.upper()}.py'
+    ssh_cmd = f'source /users/Girish/AFS/Testcases/739p1.env && python3 {script_name}'
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     username = getpass.getuser()
@@ -188,7 +188,6 @@ def mkdir(dir_name: str):
 
 def delete_file(fname: str):
     ret = os.unlink(fname)
-    assert ret == 0
 
 
 def stat_file(fname: str) -> os.stat_result:
