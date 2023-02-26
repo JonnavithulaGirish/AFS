@@ -21,7 +21,7 @@ for msgsz in msgsz_set:
         while time.time() < start_time+cooldown_sec*j: continue
         print(msgsz)
         f = open(common_file, "w")
-        msg = "a" * msgsz
+        msg = "A" * msgsz
         f.write(msg)
         f.flush()
         f.close()
