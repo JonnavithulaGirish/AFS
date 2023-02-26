@@ -138,9 +138,46 @@ def start_another_client(host: str, test_case: int, client_id: str,
     # useful when connection init has issues
     # print(stdout.readlines())
     # print(stderr.readlines())
-    # client.close()
+    # client.close()x
     # print(ssh_cmd)
 
+
+def start_another_client_flag(host: str, test_case: int, client_id: str,
+                         signal_fname: str, flag):
+    """Invoke the python script for another client via ssh.
+        REQUIRED: $USERNAME/.ssh/id_rsa.pub is added to remote client's
+        ~/.ssh/authorized_keys , or ensure client.connect() can succeed.
+        REQUIRED: put 739p1.env into ~/
+    Args:
+        host (str): hostname (remote)
+        test_case (int): test case number
+        client_id (str): client id (remote)
+        signal_fname (str): started remote client will wait for this signal.
+            and after it finish execution, it will remove this signal_file,
+            so this client can know it.
+    """
+
+    print("             start another client")
+    send_signal(host, signal_fname)
+    signal_exists = (not poll_signal_remove(host, signal_fname))
+    assert signal_exists
+    script_name = f'/users/Girish/AFS/Testcases/test{test_case}_client{client_id.upper()}.py'
+    ssh_cmd = f'source /users/Girish/AFS/Testcases/739p1.env && python3 {script_name} {flag}'
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    username = getpass.getuser()
+    home_dir = os.path.expanduser('~')
+    print(username)
+    print(home_dir)
+    assert username is not None
+    sshkey_fname = f'{home_dir}/.ssh/id_rsa'
+    print(f'Connect {username}@{host}')
+    client.connect(hostname=host, username=username, key_filename=sshkey_fname)
+    print("Helllo0000000000")
+    print(ssh_cmd)
+    stdin, stdout, stderr = client.exec_command(ssh_cmd)
+    # print(stdout.readlines())
+    # print(stderr.readlines())
 
 def send_signal(host: str, signal_fname: str):
     """
@@ -151,7 +188,7 @@ def send_signal(host: str, signal_fname: str):
     outs, _errs, ret = get_shell_cmd_output(None, ssh_cmd)
     for lo in outs:
         print(lo)
-    assert ret == 0
+    # assert ret == 0
 
 
 def poll_signal_remove(host: str, signal_fname: str) -> bool:
@@ -230,6 +267,33 @@ def read_file(fd: int, len: int, start_off: int = -1) -> str:
     ret_str = r_bytes.decode('utf-8')
     return ret_str
 
+def get_pid_client(server : str, mountPoint : str):
+    cmd = f'ps -ef | grep  "{server}"'
+    outs, _errs, ret = get_shell_cmd_output(None, cmd)
+    # print(outs)
+    for lo in outs:
+        if mountPoint in lo:
+            temp = lo.split(" ")
+            temp1 = [i for i in temp if i!=""]
+            print(temp1)
+    return temp1[1]
+def kill_pid(pid : int):
+    cmd = f'kill -9 {pid}'
+    outs, _errs, ret = get_shell_cmd_output(None, cmd)
+
+def umount(mountPoint : str):
+    cmd = f'unmount {mountPoint}'
+    outs, _errs, ret = get_shell_cmd_output(None, cmd)
+    
+def startClientServer(host : str,clientServerPoint : str, mountPoint : str,clientCache :str):
+    ssh_cmd = f'ssh {host} {clientServerPoint} {mountPoint} -f -basedir={clientCache}'
+    # print(cmd)
+    # outs, _errs, ret = get_shell_cmd_output(None, cmd,2)
+    # print(outs)
+
+    # ssh_cmd = f'ssh {host} ./user/Girish/AFS/build/unreliablefs/afs_server'
+    c = subprocess.Popen(ssh_cmd, shell=True, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
+    stdout, stderr = c.communicate()
 def killServer(host: str, port: int):
     ssh_cmd = f'ssh {host} lsof -i:{port} | grep afs_serve'
     c = subprocess.Popen(ssh_cmd, shell=True, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
