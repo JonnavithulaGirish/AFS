@@ -9,6 +9,8 @@ import time
 import json
 import paramiko
 from typing import List, Tuple
+import signal
+import subprocess
 
 
 def get_shell_cmd_output(
@@ -227,6 +229,23 @@ def read_file(fd: int, len: int, start_off: int = -1) -> str:
         r_bytes = os.read(fd, len)
     ret_str = r_bytes.decode('utf-8')
     return ret_str
+
+def killServer(host: str, port: int):
+    ssh_cmd = f'ssh {host} lsof -i:{port} | grep afs_serve'
+    c = subprocess.Popen(ssh_cmd, shell=True, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
+    stdout, stderr = c.communicate()
+    if(stdout):
+        sport = int(stdout.decode().split('afs_serve')[1].split('Girish')[0].strip())
+        cmd = f'ssh {host} kill -9 {sport}'
+        outs, _errs, ret = get_shell_cmd_output(None, cmd)
+
+def RestartServer(host: str, port: int):
+    ssh_cmd = f'ssh {host} /users/Girish/AFS/build/unreliablefs/afs_server'
+    c = subprocess.Popen(ssh_cmd, shell=True, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
+    stdout, stderr = c.communicate()
+    print(stdout.decode())
+    print(stderr.decode())
+    
 
 
 def test():

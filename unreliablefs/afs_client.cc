@@ -186,6 +186,16 @@ public:
         errno = reply.errnum();
       cout << "Error on GetAttr() with errno :: "<< errno << endl;
       cout << status.error_code() << ": " << status.error_message() << std::endl;
+      if(status.error_code() == 14){
+        struct stat localbuf;
+        string localCacheFilePath = m_cacheDir+sha256(path);
+        int ret = lstat(localCacheFilePath.c_str(), &localbuf);
+        if (ret != -1)
+        {
+          memcpy((char *)buf, &localbuf, sizeof(struct stat));
+        }
+        return 1;
+      }
       return -1;
     }
   }
