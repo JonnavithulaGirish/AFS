@@ -1,68 +1,64 @@
-## UnreliableFS
+# Installing RAG-AFS
+## Install GRPC C++
+Please follow the steps below:
+https://grpc.io/docs/languages/cpp/quickstart/
+Run the following commands to set the GRPC local installation to $PATH.
+```sh
+export  MY_INSTALL_DIR=$HOME/.local
+export  PATH="$MY_INSTALL_DIR/bin:$PATH"
+```
 
-[![Build Status](https://api.cirrus-ci.com/github/ligurio/unreliablefs.svg)](https://cirrus-ci.com/github/ligurio/unreliablefs)
-
-is a FUSE-based fault injection filesystem that allows to change
-fault-injections in runtime using simple configuration file.
-
-Supported fault injections are:
-
-- `errinj_errno` - return error value and set random errno.
-- `errinj_kill_caller` - send SIGKILL to a process that invoked file operation.
-- `errinj_noop` - replace file operation with no operation
-  (similar to [libeatmydata](https://github.com/stewartsmith/libeatmydata),
-  but applicable to any file operation).
-- `errinj_slowdown` - slowdown invoked file operation.
-
-### Building
-
-Prerequisites:
+## Prerequisites for unreliable FS and RAG AFS:
 
 - CentOS: `dnf install -y gcc -y cmake fuse fuse-devel`
 - Ubuntu: `apt-get install -y gcc cmake fuse libfuse-dev`
 - FreeBSD: `pkg install gcc cmake fusefs-libs pkgconf`
 - OpenBSD: `pkg_add cmake`
 - macOS: `brew install --cask osxfuse`
+- Install openssl - `sudo apt-get install libssl-dev`
 
+## Building the project
 ```sh
 $ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 $ cmake --build build --parallel
 ```
-
-### Packages
-
-[![Packaging status](https://repology.org/badge/vertical-allrepos/fusefs:unreliablefs.svg)](https://repology.org/project/fusefs:unreliablefs/versions)
-
-### Using
+## Running the AFS server:
 
 ```sh
-$ mkdir /tmp/fs
-$ unreliablefs /tmp/fs -base_dir=/tmp -seed=1618680646
-$ cat << EOF > /tmp/fs/unreliablefs.conf
-[errinj_noop]
-op_regexp = .*
-path_regexp = .*
-probability = 30
-EOF
-$ ls -la
-$ umount /tmp/fs
+./afs_server <server directory subtree exposed to the clients>
+```
+Example:
+```sh
+./afs_server /home/araghavan/ragAFS
 ```
 
-### Documentation
+## Running the AFS client:
+Update line #82 `char serverNodePort[] = "localhost:50051";` with the nodePort of the server. Default fallback - `localhost:50051`
+Our AFS client runs on top of UnreliableFS which itself runs on top of FUSE.
+Please issue the following commands:
+```sh
+cd build/unreliablefs
+./unreliablefs <mount_point> -f -basedir=<cache_dir>
+```
+- mount_point refers to the location (in the directory structure) where AFS should be mounted
+- cache_dir refers to the location that AFS should use for caching.
+For example,
+```sh
+./unreliablefs /users/Girish/fusemnt/ -f -basedir=/users/Girish/afscache/
+```
 
-See documentation in [unreliablefs.1](https://ligurio.github.io/unreliablefs/unreliablefs.1.html) and
-[unreliablefs.conf.5](https://ligurio.github.io/unreliablefs/unreliablefs.conf.5.html).
+## Injecting errors:
+See unreliable FS documentation in [unreliablefs.1](https://ligurio.github.io/unreliablefs/unreliablefs.1.html) and [unreliablefs.conf.5](https://ligurio.github.io/unreliablefs/unreliablefs.conf.5.html).
 
-### Similar projects
-
-- CuttleFS - FUSE-based file system with private page cache to simulate post fsync
-  failure characteristics of modern file systems.
-- libeatmydata - `LD_PRELOAD` library that disables all forms of writing data
-  safely to disk. `fsync()` becomes a NO-OP, `O_SYNC` is removed etc.
-- CharybdeFS - FUSE-based fault injection filesystem with a Thrift RPC
-  interface for instrumentation.
-- PetardFS - FUSE-based file system for injecting intentional errors.
-- HookFS - Usermode Hookable Filesystem Library.
-- Kibosh - fault-injecting filesystem for Linux. It is written in C using
-  FUSE, faults are injected by writing JSON to the control file.
-- chaos-mesh/toda - hook filesystem and utils to inject I/O chaos.
+## Who's the winner?
+For extracting information out of our system we log appropriate data from clients and server.
+Server logs are written to a file `serverevents` at $CWD. 
+Client logs are written to the file `rpctimes` at client's $CWD. 
+Run the following command simultaneously in two different nodes to issue concurrent requests to the server.
+```sh
+python3 winner.py
+```
+Place the parse_server_logs.py script in the same directory as the server logs and run the following command to extract a summary from the logs. 
+```sh
+python3 parse_server_logs.py
+```

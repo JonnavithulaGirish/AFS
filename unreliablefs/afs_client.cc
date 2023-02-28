@@ -79,7 +79,7 @@ using namespace std;
 
 char *mountPoint;
 char *cacheDir;
-char serverNodePort[] = "10.10.1.4:50051";
+char serverNodePort[] = "localhost:50051";
 string consistency_winner_file = "winner";
 
 string sha256(const string str)
@@ -118,7 +118,7 @@ private:
   AfsClientSingleton(std::shared_ptr<Channel> channel) : stub_(AFS::NewStub(channel))
   {
      m_mountPoint= mountPoint;
-     m_cacheDir="/users/Girish/afscache/";
+     m_cacheDir=cacheDir;
     //m_mountPoint = filesystem::absolute(filesystem::path(mountPoint)).string();
     //m_cacheDir = filesystem::absolute(filesystem::path(cacheDir)).string()+"/";
   }
@@ -430,7 +430,7 @@ public:
       std::unique_ptr<ClientWriter<CloseRequest> > writer(
           stub_->Close(&context, &reply));
 
-    ofstream logRPCTime("/users/Girish/logs/rpctimes", fstream::app);
+    ofstream logRPCTime("./rpctimes", fstream::app);
     auto start = chrono::high_resolution_clock::now();
 
       while (ret)

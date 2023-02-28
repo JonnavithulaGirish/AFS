@@ -82,6 +82,7 @@ mutex clsmtx;
 string consistency_winner_file = "winner";
 
 string serverBaseDir("/users/Girish/serverfs/");
+string logPath("./serverevents");
 
 // Logic and data behind the server's behavior.
 class AfsServiceImpl final : public AFS::Service {
@@ -174,7 +175,7 @@ class AfsServiceImpl final : public AFS::Service {
       char clientid = '*';
 
      std::cout<< "Close Got Called with path:: " <<std::endl;
-      ofstream logEvents("/users/Girish/logs/serverevents", fstream::app);
+      ofstream logEvents(logPath.c_str(), fstream::app);
       auto microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
       //time_t seconds = time (NULL);
       string originalPath,tempPath;
