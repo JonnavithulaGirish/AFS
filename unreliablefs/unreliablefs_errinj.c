@@ -15,8 +15,13 @@
 #include "unreliablefs.h"
 #include "unreliablefs_errinj.h"
 
+#define ERRNO_ALICE -100
+
 static int rand_range(int, int);
-int error_inject(const char* path, fuse_op operation);
+int error_inject(const char* path, fuse_op operation, struct errinj_writeParams *params);
+int n = 5;
+struct errinj_writeParams* errQueue[5];
+int fullIndex = 0;
 
 extern struct unreliablefs_config conf;
 
@@ -162,11 +167,29 @@ static int rand_range(int min_n, int max_n)
     return rand() % (max_n - min_n + 1) + min_n;
 }
 
-int error_inject(const char* path, fuse_op operation)
+
+void* applyDelay(void* params){
+  struct errinj_writeParams tparams= *(errinj_writeParams*) params;
+  printf("I thread am sleeping for %d sec\n",tparams.delay);
+  printf("buf is:: %s\n",tparams.buf);
+  printf("buf size %ld\n",tparams.size);
+  printf("offset::  %ld\n",tparams.offset);
+
+  sleep(tparams.delay);
+  printf("I wokr up now \n");
+  pwrite(tparams.fi->fh, tparams.buf, tparams.size, tparams.offset);
+  return(NULL);
+}
+
+
+int error_inject(const char* path, fuse_op operation, struct errinj_writeParams *params)
 {
     /* instead of returning an error in 'errno', the operation should return
      * the negated error value (-errno) directly.
      */
+
+    // printf("hi in the error inject\n");
+    // printf("-----------adfa------ path : %s and conf.config_path : %s\n",path,conf.config_path);
     int rc = -0;
     struct errinj_conf *err;
     /* read configuration file on change */
@@ -174,33 +197,39 @@ int error_inject(const char* path, fuse_op operation)
     if (strcmp(path, conf.config_path) == 0) {
         config_delete(conf.errors);
         conf.errors = config_init(path);
+        // printf("---------sfbsgf\n");
         goto cleanup;
     }
     if (!conf.errors) {
+        // printf("==========\n");
         goto cleanup;
     }
 
     /* apply error injections defined in configuration one by one */
     TAILQ_FOREACH(err, conf.errors, entries) {
+        
         unsigned int p = rand_range(MIN_PROBABLITY, MAX_PROBABLITY);
+        fprintf(stdout,"err type - %d and err Probability %d\n ",err->type,err->probability);
         if (!(p <= err->probability)) {
-            fprintf(stderr, "errinj '%s' skipped: probability (%d) is not matched\n",
+            fprintf(stdout, "errinj '%s' skipped: probability (%d) is not matched\n",
                             errinj_name[err->type], err->probability);
             continue;
         }
         const char* op_name = fuse_op_name[operation];
 	if (is_regex_matched(err->path_regexp, path) != 0) {
-	    fprintf(stderr, "errinj '%s' skipped: path_regexp (%s) is not matched\n",
+	    fprintf(stdout,"errinj '%s' skipped: path_regexp (%s) is not matched\n",
                             errinj_name[err->type], err->path_regexp);
 	    continue;
 	}
 	if (is_regex_matched(err->op_regexp, op_name) != 0) {
-	    fprintf(stderr, "errinj '%s' skipped: op_regexp (%s) is not matched\n",
+	    fprintf(stdout, "errinj '%s' skipped: op_regexp (%s) is not matched\n",
                             errinj_name[err->type], err->op_regexp);
 	    continue;
 	}
         fprintf(stdout, "%s triggered on operation '%s', %s\n",
                         errinj_name[err->type], op_name, path);
+    
+    
 	switch (err->type) {
         case ERRINJ_NOOP:
             rc = -ERRNO_NOOP;
@@ -222,16 +251,46 @@ int error_inject(const char* path, fuse_op operation)
             rc = -rc;
             break;
         case ERRINJ_SLOWDOWN: ;
-	    struct timespec ts = {};
-	    ts.tv_nsec = err->duration;
-            fprintf(stdout, "start of '%s' slowdown for '%d' ns\n", op_name, err->duration);
-            if (nanosleep(&ts, NULL) != 0) {
-		perror("nanosleep");
-            } else {
-		fprintf(stdout, "end of '%s' slowdown with '%d' ns\n", op_name, err->duration);
+            struct timespec ts = {};
+            ts.tv_nsec = err->duration;
+                fprintf(stdout, "start of '%s' slowdown for '%d' ns\n", op_name, err->duration);
+                if (nanosleep(&ts, NULL) != 0) {
+            perror("nanosleep");
+                } else {
+            fprintf(stdout, "end of '%s' slowdown with '%d' ns\n", op_name, err->duration);
+                }
+                break;
+        case ERRINJ_ALICE_REORDER:
+            if(operation != OP_WRITE){
+                break;
             }
+            struct errinj_writeParams* val;
+            
+            if(fullIndex == n){
+                int index = rand() %n;
+                val = errQueue[index];
+                errQueue[index] = params;
+            }else{
+                fullIndex++;
+                rc = ERRNO_ALICE;
+                break;
+            }
+            pwrite(val->fi->fh, val->buf,val->size, val->offset);
+            rc = ERRNO_ALICE;
+            break;
+        case ERRINJ_ALICE_DELAY:
+            if(operation != OP_WRITE){
+                break;
+            }
+            params->delay = err->duration;
+            printf("Setting thread duration for %d\n",err->duration);
+            pthread_t id;
+            pthread_create(&id, NULL, applyDelay, params);
+            rc = ERRNO_ALICE; 
             break;
         }
+        
+        
     }
 
 cleanup:

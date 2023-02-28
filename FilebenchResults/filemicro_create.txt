@@ -1,0 +1,121 @@
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+176633: 0.000: Allocated 170MB of shared memory
+176633: 0.001: FileMicro-Create Version 2.1 personality successfully loaded
+176633: 0.001: Creating/pre-allocating files and filesets
+176633: 0.024: File largefile: 0.000MB
+176633: 0.099: Removed any existing file largefile in 1 seconds
+176633: 0.099: making tree for filset /users/Girish/fusemnt//largefile
+176633: 0.121: Creating file largefile...
+176633: 0.222: Preallocated 1 of 1 of file largefile in 1 seconds
+176633: 0.222: waiting for fileset pre-allocation to finish
+176679: 0.223: Starting 1 filecreater instances
+176680: 0.227: Starting 1 filecreaterthread threads
+176633: 1.228: Running...
+176633: 11.229: Run took 10 seconds...
+176633: 11.230: Per-Operation Breakdown
+finish               429ops       43ops/s   0.0mb/s      0.0ms/op       47us/op-cpu [0ms - 0ms]
+append-file          430ops       43ops/s  42.9mb/s     23.0ms/op     3233us/op-cpu [18ms - 87ms]
+176633: 11.230: IO Summary:   430 ops, 42.997 ops/s, (0/43 r/w),  42.9mb/s, 131488us cpu/op,  23.0ms latency
+176633: 11.230: Shutting down processes
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+177090: 0.000: Allocated 170MB of shared memory
+177090: 0.001: FileMicro-Create Version 2.1 personality successfully loaded
+177090: 0.001: Creating/pre-allocating files and filesets
+177090: 0.006: File largefile: 0.000MB
+177090: 2.754: Removed any existing file largefile in 3 seconds
+177090: 2.754: making tree for filset /users/Girish/fusemnt//largefile
+177090: 2.776: Creating file largefile...
+177090: 2.786: Preallocated 1 of 1 of file largefile in 1 seconds
+177090: 2.786: waiting for fileset pre-allocation to finish
+177147: 2.787: Starting 1 filecreater instances
+177148: 2.791: Starting 1 filecreaterthread threads
+177090: 3.792: Running...
+177090: 13.793: Run took 10 seconds...
+177090: 13.793: Per-Operation Breakdown
+finish               432ops       43ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+append-file          433ops       43ops/s  43.2mb/s     22.8ms/op     3672us/op-cpu [19ms - 84ms]
+177090: 13.794: IO Summary:   433 ops, 43.296 ops/s, (0/43 r/w),  43.2mb/s, 129654us cpu/op,  22.8ms latency
+177090: 13.794: Shutting down processes
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+179363: 0.000: Allocated 170MB of shared memory
+179363: 0.001: FileMicro-Create Version 2.1 personality successfully loaded
+179363: 0.001: Creating/pre-allocating files and filesets
+179363: 0.005: File largefile: 0.000MB
+179363: 0.381: Removed any existing file largefile in 1 seconds
+179363: 0.381: making tree for filset /users/Girish/fusemnt//largefile
+179363: 0.402: Creating file largefile...
+179363: 0.503: Preallocated 1 of 1 of file largefile in 1 seconds
+179363: 0.503: waiting for fileset pre-allocation to finish
+179372: 0.503: Starting 1 filecreater instances
+179373: 0.508: Starting 1 filecreaterthread threads
+179363: 1.509: Running...
+179363: 11.510: Run took 10 seconds...
+179363: 11.510: Per-Operation Breakdown
+finish               474ops       47ops/s   0.0mb/s      0.0ms/op       42us/op-cpu [0ms - 0ms]
+append-file          475ops       47ops/s  47.4mb/s     20.9ms/op     1874us/op-cpu [16ms - 90ms]
+179363: 11.510: IO Summary:   475 ops, 47.496 ops/s, (0/47 r/w),  47.4mb/s, 120653us cpu/op,  20.9ms latency
+179363: 11.510: Shutting down processes
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+179979: 0.000: Allocated 170MB of shared memory
+179979: 0.001: FileMicro-Create Version 2.1 personality successfully loaded
+179979: 0.001: Creating/pre-allocating files and filesets
+179979: 0.005: File largefile: 0.000MB
+179979: 0.448: Removed any existing file largefile in 1 seconds
+179979: 0.448: making tree for filset /users/Girish/fusemnt//largefile
+179979: 0.469: Creating file largefile...
+179979: 0.570: Preallocated 1 of 1 of file largefile in 1 seconds
+179979: 0.570: waiting for fileset pre-allocation to finish
+179985: 0.571: Starting 1 filecreater instances
+179986: 0.575: Starting 1 filecreaterthread threads
+179979: 1.576: Running...
+179979: 11.577: Run took 10 seconds...
+179979: 11.578: Per-Operation Breakdown
+finish               301ops       30ops/s   0.0mb/s      0.0ms/op       33us/op-cpu [0ms - 0ms]
+append-file          302ops       30ops/s  30.1mb/s     32.8ms/op     3576us/op-cpu [16ms - 1171ms]
+179979: 11.578: IO Summary:   302 ops, 30.197 ops/s, (0/30 r/w),  30.1mb/s, 149868us cpu/op,  32.8ms latency
+179979: 11.578: Shutting down processes
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+180530: 0.000: Allocated 170MB of shared memory
+180530: 0.001: FileMicro-Create Version 2.1 personality successfully loaded
+180530: 0.001: Creating/pre-allocating files and filesets
+180530: 0.005: File largefile: 0.000MB
+180530: 0.476: Removed any existing file largefile in 1 seconds
+180530: 0.476: making tree for filset /users/Girish/fusemnt//largefile
+180530: 0.494: Creating file largefile...
+180530: 0.601: Preallocated 1 of 1 of file largefile in 1 seconds
+180530: 0.601: waiting for fileset pre-allocation to finish
+180536: 0.602: Starting 1 filecreater instances
+180537: 0.606: Starting 1 filecreaterthread threads
+180530: 1.607: Running...
+180530: 11.608: Run took 10 seconds...
+180530: 11.609: Per-Operation Breakdown
+finish               369ops       37ops/s   0.0mb/s      0.0ms/op       27us/op-cpu [0ms - 0ms]
+append-file          370ops       37ops/s  36.9mb/s     25.9ms/op     3649us/op-cpu [16ms - 455ms]
+180530: 11.609: IO Summary:   370 ops, 36.997 ops/s, (0/37 r/w),  36.9mb/s, 138459us cpu/op,  25.9ms latency
+180530: 11.609: Shutting down processes

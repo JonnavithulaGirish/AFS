@@ -1,0 +1,71 @@
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+327694: 0.000: Allocated 170MB of shared memory
+327694: 0.001: FileMicro-ReadRand Version 2.2 personality successfully loaded
+327694: 0.001: Creating/pre-allocating files and filesets
+327694: 0.006: File bigfile1: 4096.000MB
+327694: 0.075: Removed any existing file bigfile1 in 1 seconds
+327694: 0.075: making tree for filset /users/Girish/fusemnt//bigfile1
+327694: 0.224: Creating file bigfile1...
+327694: 101.225: Preallocated 1 of 1 of file bigfile1 in 102 seconds
+327694: 101.225: waiting for fileset pre-allocation to finish
+328371: 101.225: Starting 1 filereader instances
+328372: 101.228: Starting 1 filereaderthread threads
+327694: 102.228: Running...
+327694: 104.229: Run took 2 seconds...
+327694: 104.230: Per-Operation Breakdown
+finish               8749ops     4374ops/s   0.0mb/s      0.0ms/op       19us/op-cpu [0ms - 0ms]
+write-file           8750ops     4375ops/s   5.5mb/s      0.1ms/op       27us/op-cpu [0ms - 427ms]
+327694: 104.230: IO Summary:  8750 ops, 4374.525 ops/s, (4375/0 r/w),   5.5mb/s,   1110us cpu/op,   0.1ms latency
+327694: 104.230: Shutting down processes
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+335127: 0.000: Allocated 170MB of shared memory
+335127: 0.001: FileMicro-ReadRand Version 2.2 personality successfully loaded
+335127: 0.001: Creating/pre-allocating files and filesets
+335127: 0.011: File bigfile1: 4096.000MB
+335127: 0.028: Removed any existing file bigfile1 in 1 seconds
+335127: 0.028: making tree for filset /users/Girish/fusemnt//bigfile1
+335127: 0.058: Creating file bigfile1...
+335127: 83.585: Preallocated 1 of 1 of file bigfile1 in 84 seconds
+335127: 83.585: waiting for fileset pre-allocation to finish
+335641: 83.586: Starting 1 filereader instances
+335642: 83.588: Starting 1 filereaderthread threads
+335127: 84.589: Running...
+335127: 86.590: Run took 2 seconds...
+335127: 86.590: Per-Operation Breakdown
+finish               2681ops     1340ops/s   0.0mb/s      0.0ms/op       19us/op-cpu [0ms - 0ms]
+write-file           2682ops     1341ops/s   2.5mb/s      0.7ms/op       26us/op-cpu [0ms - 1641ms]
+335127: 86.590: IO Summary:  2682 ops, 1340.856 ops/s, (1341/0 r/w),   2.5mb/s,   2871us cpu/op,   0.7ms latency
+335127: 86.590: Shutting down processes
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+342931: 0.000: Allocated 170MB of shared memory
+342931: 0.001: FileMicro-ReadRand Version 2.2 personality successfully loaded
+342931: 0.001: Creating/pre-allocating files and filesets
+342931: 0.006: File bigfile1: 4.000MB
+342931: 0.006: Re-using file bigfile1.
+342931: 0.006: Creating file bigfile1...
+342931: 121.288: Preallocated 1 of 1 of file bigfile1 in 122 seconds
+342931: 121.288: waiting for fileset pre-allocation to finish
+343432: 121.288: Starting 1 filereader instances
+343433: 121.292: Starting 1 filereaderthread threads
+342931: 122.293: Running...
+342931: 124.294: Run took 2 seconds...
+342931: 124.294: Per-Operation Breakdown
+finish               65ops       32ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+write-file           66ops       33ops/s   0.0mb/s     16.6ms/op        0us/op-cpu [0ms - 1089ms]
+342931: 124.294: IO Summary:    66 ops, 32.997 ops/s, (33/0 r/w),   0.0mb/s, 141515us cpu/op,  16.6ms latency
+342931: 124.294: Shutting down processes
+

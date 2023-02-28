@@ -1,0 +1,72 @@
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+644919: 0.000: Allocated 170MB of shared memory
+644919: 0.001: FileMicro-SeqWrite Version 2.2 personality successfully loaded
+644919: 0.001: Creating/pre-allocating files and filesets
+644919: 0.025: File bigfile: 0.000MB
+644919: 0.502: Removed any existing file bigfile in 1 seconds
+644919: 0.502: making tree for filset /users/Girish/fusemnt//bigfile
+644919: 0.524: Creating file bigfile...
+644919: 0.624: Preallocated 1 of 1 of file bigfile in 1 seconds
+644919: 0.624: waiting for fileset pre-allocation to finish
+644976: 0.625: Starting 1 filewriter instances
+644977: 0.629: Starting 1 filewriterthread threads
+644919: 1.629: Running...
+644919: 11.631: Run took 10 seconds...
+644919: 11.631: Per-Operation Breakdown
+finish               0ops        0ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+write-file           429ops       43ops/s  42.8mb/s     23.1ms/op     2914us/op-cpu [10ms - 152ms]
+644919: 11.631: IO Summary:   429 ops, 42.897 ops/s, (0/43 r/w),  42.8mb/s, 144942us cpu/op,  23.1ms latency
+644919: 11.631: Shutting down processes
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+646036: 0.000: Allocated 170MB of shared memory
+646036: 0.001: FileMicro-SeqWrite Version 2.2 personality successfully loaded
+646036: 0.001: Creating/pre-allocating files and filesets
+646036: 0.006: File bigfile: 0.000MB
+646036: 0.062: Removed any existing file bigfile in 1 seconds
+646036: 0.062: making tree for filset /users/Girish/fusemnt//bigfile
+646036: 0.083: Creating file bigfile...
+646036: 0.184: Preallocated 1 of 1 of file bigfile in 1 seconds
+646036: 0.184: waiting for fileset pre-allocation to finish
+646041: 0.185: Starting 1 filewriter instances
+646042: 0.189: Starting 1 filewriterthread threads
+646036: 1.189: Running...
+646036: 11.191: Run took 10 seconds...
+646036: 11.191: Per-Operation Breakdown
+finish               0ops        0ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+write-file           353ops       35ops/s  35.2mb/s     28.1ms/op     3484us/op-cpu [18ms - 425ms]
+646036: 11.191: IO Summary:   353 ops, 35.297 ops/s, (0/35 r/w),  35.2mb/s, 172748us cpu/op,  28.1ms latency
+646036: 11.191: Shutting down processes
+
+
+node1:~/filebench-1.4.9.1/filebench_workloads> filebench -f filemicro_seqwrite.f
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+646819: 0.000: Allocated 170MB of shared memory
+646819: 0.001: FileMicro-SeqWrite Version 2.2 personality successfully loaded
+646819: 0.001: Creating/pre-allocating files and filesets
+646819: 0.025: File bigfile: 0.000MB
+646819: 0.225: Removed any existing file bigfile in 1 seconds
+646819: 0.225: making tree for filset /users/Girish/fusemnt//bigfile
+646819: 0.246: Creating file bigfile...
+646819: 0.348: Preallocated 1 of 1 of file bigfile in 1 seconds
+646819: 0.348: waiting for fileset pre-allocation to finish
+646865: 0.349: Starting 1 filewriter instances
+646866: 0.353: Starting 1 filewriterthread threads
+646819: 1.354: Running...
+646819: 11.355: Run took 10 seconds...
+646819: 11.355: Per-Operation Breakdown
+finish               0ops        0ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+write-file           449ops       45ops/s  44.8mb/s     22.1ms/op     3207us/op-cpu [10ms - 283ms]
+646819: 11.355: IO Summary:   449 ops, 44.896 ops/s, (0/45 r/w),  44.8mb/s, 127506us cpu/op,  22.1ms latency
+646819: 11.355: Shutting down processes

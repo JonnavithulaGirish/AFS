@@ -24,7 +24,17 @@
 #define ERRNO_NOOP -999
 #define DEFAULT_SIGNAL_NAME SIGKILL
 
-int error_inject(const char* path, fuse_op operation);
+typedef struct errinj_writeParams {
+    char *path;
+    char *buf;
+    size_t size;
+    off_t offset;
+    struct fuse_file_info *fi;
+    int delay;
+} errinj_writeParams;
+
+
+int error_inject(const char* path, fuse_op operation, struct errinj_writeParams *params);
 struct err_inj_q *config_init(const char* conf_path);
 void config_delete(struct err_inj_q *config);
 int conf_option_handler(void* cfg, const char* section,
@@ -37,6 +47,8 @@ const char *errinj_name[] =
     "errinj_kill_caller",
     "errinj_noop",
     "errinj_slowdown",
+    "errinj_alice_reorder",
+    "errinj_alice_delay",
 };
 
 typedef enum {
@@ -44,9 +56,12 @@ typedef enum {
     ERRINJ_KILL_CALLER,
     ERRINJ_NOOP,
     ERRINJ_SLOWDOWN,
+    ERRINJ_ALICE_REORDER,
+    ERRINJ_ALICE_DELAY,
 } errinj_type;
 
 typedef struct errinj_conf errinj_conf;
+// typedef struct errInj_writeParams errInj_writeParams;
 
 struct errinj_conf {
     char *err_injection_name;
@@ -59,6 +74,14 @@ struct errinj_conf {
 
     TAILQ_ENTRY(errinj_conf) entries;
 };
+
+// struct errinj_writeParams {
+//     char *path;
+//     char *buf;
+//     size_t size;
+//     off_t offset;
+//     struct fuse_file_info *fi;
+// };
 
 TAILQ_HEAD(err_inj_q, errinj_conf);
 

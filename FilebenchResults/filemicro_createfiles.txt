@@ -1,0 +1,102 @@
+node0:~/filebench-1.4.9.1/filebench_workloads> filebench -f filemicro_createfiles.f
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+181206: 0.000: Allocated 170MB of shared memory
+181206: 0.002: FileMicro-Createfiles Version 2.2 personality successfully loaded
+181206: 0.002: Creating/pre-allocating files and filesets
+181206: 0.280: Fileset bigfileset: 200000 files, 0 leafdirs, avg dir width = 100000, avg dir depth = 1.1, 195.292MB
+181206: 0.293: Removed any existing fileset bigfileset in 1 seconds
+181206: 0.293: making tree for filset /users/Girish/fusemnt//bigfileset
+181206: 0.329: Creating fileset bigfileset...
+181206: 1228.627: Preallocated 100076 of 200000 of fileset bigfileset in 1229 seconds
+181206: 1228.627: waiting for fileset pre-allocation to finish
+288720: 1228.628: Starting 1 filecreate instances
+288721: 1228.632: Starting 1 filecreatethread threads
+181206: 1229.633: Running...
+181206: 1239.634: Run took 10 seconds...
+181206: 1239.635: Per-Operation Breakdown
+finish               692ops       69ops/s   0.0mb/s      0.0ms/op       14us/op-cpu [0ms - 0ms]
+closefile1           692ops       69ops/s   0.0mb/s      0.1ms/op       72us/op-cpu [0ms - 0ms]
+writefile1           693ops       69ops/s   0.0mb/s      2.7ms/op      115us/op-cpu [1ms - 3ms]
+createfile1          693ops       69ops/s   0.0mb/s     11.3ms/op      101us/op-cpu [8ms - 17ms]
+181206: 1239.635: IO Summary:  2078 ops, 207.783 ops/s, (0/69 r/w),   0.0mb/s,  38066us cpu/op,  14.0ms latency
+181206: 1239.635: Shutting down processes
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+290940: 0.000: Allocated 170MB of shared memory
+290940: 0.001: FileMicro-Createfiles Version 2.2 personality successfully loaded
+290940: 0.001: Creating/pre-allocating files and filesets
+290940: 0.068: Fileset bigfileset: 20000 files, 0 leafdirs, avg dir width = 10000, avg dir depth = 1.1, 19.384MB
+290940: 0.080: Removed any existing fileset bigfileset in 1 seconds
+290940: 0.080: making tree for filset /users/Girish/fusemnt//bigfileset
+290940: 0.112: Creating fileset bigfileset...
+290940: 122.430: Preallocated 9884 of 20000 of fileset bigfileset in 123 seconds
+290940: 122.430: waiting for fileset pre-allocation to finish
+301702: 122.430: Starting 1 filecreate instances
+301703: 122.434: Starting 1 filecreatethread threads
+290940: 123.435: Running...
+290940: 129.436: Run took 6 seconds...
+290940: 129.437: Per-Operation Breakdown
+finish               403ops       67ops/s   0.0mb/s      0.0ms/op      124us/op-cpu [0ms - 0ms]
+closefile1           403ops       67ops/s   0.0mb/s      0.1ms/op       74us/op-cpu [0ms - 0ms]
+writefile1           403ops       67ops/s   0.0mb/s      2.8ms/op       50us/op-cpu [1ms - 3ms]
+createfile1          403ops       67ops/s   0.0mb/s     11.6ms/op       99us/op-cpu [9ms - 17ms]
+290940: 129.437: IO Summary:  1209 ops, 201.484 ops/s, (0/67 r/w),   0.0mb/s,  37742us cpu/op,  14.4ms latency
+290940: 129.437: Shutting down processes
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+302436: 0.000: Allocated 170MB of shared memory
+302436: 0.001: FileMicro-Createfiles Version 2.2 personality successfully loaded
+302436: 0.001: Creating/pre-allocating files and filesets
+302436: 0.030: Fileset bigfileset: 20000 files, 0 leafdirs, avg dir width = 10000, avg dir depth = 1.1, 19.384MB
+302436: 55.621: Removed any existing fileset bigfileset in 56 seconds
+302436: 55.621: making tree for filset /users/Girish/fusemnt//bigfileset
+302436: 55.658: Creating fileset bigfileset...
+302436: 175.773: Preallocated 9884 of 20000 of fileset bigfileset in 121 seconds
+302436: 175.773: waiting for fileset pre-allocation to finish
+313505: 175.774: Starting 1 filecreate instances
+313506: 175.777: Starting 1 filecreatethread threads
+302436: 176.778: Running...
+302436: 182.780: Run took 6 seconds...
+302436: 182.780: Per-Operation Breakdown
+finish               404ops       67ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+closefile1           404ops       67ops/s   0.0mb/s      0.1ms/op       50us/op-cpu [0ms - 0ms]
+writefile1           404ops       67ops/s   0.0mb/s      2.8ms/op      124us/op-cpu [1ms - 3ms]
+createfile1          405ops       67ops/s   0.0mb/s     11.5ms/op       99us/op-cpu [8ms - 16ms]
+302436: 182.780: IO Summary:  1213 ops, 202.148 ops/s, (0/67 r/w),   0.0mb/s,  36658us cpu/op,  14.4ms latency
+302436: 182.780: Shutting down processes
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+314128: 0.000: Allocated 170MB of shared memory
+314128: 0.001: FileMicro-Createfiles Version 2.2 personality successfully loaded
+314128: 0.001: Creating/pre-allocating files and filesets
+314128: 0.031: Fileset bigfileset: 20000 files, 0 leafdirs, avg dir width = 10000, avg dir depth = 1.1, 19.384MB
+314128: 55.173: Removed any existing fileset bigfileset in 56 seconds
+314128: 55.173: making tree for filset /users/Girish/fusemnt//bigfileset
+314128: 55.208: Creating fileset bigfileset...
+314128: 174.977: Preallocated 9884 of 20000 of fileset bigfileset in 120 seconds
+314128: 174.977: waiting for fileset pre-allocation to finish
+325205: 174.977: Starting 1 filecreate instances
+325206: 174.982: Starting 1 filecreatethread threads
+314128: 175.983: Running...
+314128: 181.984: Run took 6 seconds...
+314128: 181.984: Per-Operation Breakdown
+finish               405ops       67ops/s   0.0mb/s      0.0ms/op       49us/op-cpu [0ms - 0ms]
+closefile1           405ops       67ops/s   0.0mb/s      0.1ms/op       25us/op-cpu [0ms - 0ms]
+writefile1           405ops       67ops/s   0.0mb/s      2.8ms/op      123us/op-cpu [1ms - 3ms]
+createfile1          406ops       68ops/s   0.0mb/s     11.6ms/op      123us/op-cpu [9ms - 16ms]
+314128: 181.984: IO Summary:  1216 ops, 202.649 ops/s, (0/67 r/w),   0.0mb/s,  35679us cpu/op,  14.5ms latency
+314128: 181.984: Shutting down processes

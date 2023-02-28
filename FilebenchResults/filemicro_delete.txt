@@ -1,0 +1,102 @@
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+557834: 0.000: Allocated 170MB of shared memory
+557834: 0.001: FileMicro-Delete Version 2.4 personality successfully loaded
+557834: 0.001: Creating/pre-allocating files and filesets
+557834: 0.004: Fileset bigfileset: 500 files, 0 leafdirs, avg dir width = 100, avg dir depth = 1.3, 7.338MB
+557834: 1.378: Removed any existing fileset bigfileset in 2 seconds
+557834: 1.379: making tree for filset /users/Girish/fusemnt//bigfileset
+557834: 1.478: Creating fileset bigfileset...
+557834: 4.653: Preallocated 500 of 500 of fileset bigfileset in 4 seconds
+557834: 4.654: waiting for fileset pre-allocation to finish
+560292: 4.888: Starting 1 filedelete instances
+560293: 4.893: Starting 16 filedeletethread threads
+557834: 5.896: Running...
+557834: 8.897: Run took 3 seconds...
+557834: 8.898: Per-Operation Breakdown
+finish               485ops      162ops/s   0.0mb/s      0.0ms/op       41us/op-cpu [0ms - 0ms]
+limit                0ops        0ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+deletefile1          500ops      167ops/s   0.0mb/s     80.9ms/op     4600us/op-cpu [9ms - 101ms]
+557834: 8.898: IO Summary:   500 ops, 166.648 ops/s, (0/0 r/w),   0.0mb/s,      0us cpu/op,   0.0ms latency
+557834: 8.898: Shutting down processes
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+590943: 0.000: Allocated 170MB of shared memory
+590943: 0.001: FileMicro-Delete Version 2.4 personality successfully loaded
+590943: 0.001: Creating/pre-allocating files and filesets
+590943: 0.026: Fileset bigfileset: 500 files, 0 leafdirs, avg dir width = 100, avg dir depth = 1.3, 7.338MB
+590943: 0.039: Removed any existing fileset bigfileset in 1 seconds
+590943: 0.039: making tree for filset /users/Girish/fusemnt//bigfileset
+590943: 0.139: Creating fileset bigfileset...
+590943: 4.549: Preallocated 500 of 500 of fileset bigfileset in 5 seconds
+590943: 4.549: waiting for fileset pre-allocation to finish
+593397: 4.774: Starting 1 filedelete instances
+593398: 4.779: Starting 16 filedeletethread threads
+590943: 5.782: Running...
+590943: 8.783: Run took 3 seconds...
+590943: 8.784: Per-Operation Breakdown
+finish               485ops      162ops/s   0.0mb/s      0.0ms/op      103us/op-cpu [0ms - 0ms]
+limit                0ops        0ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+deletefile1          500ops      167ops/s   0.0mb/s     80.6ms/op     4960us/op-cpu [9ms - 102ms]
+590943: 8.784: IO Summary:   500 ops, 166.650 ops/s, (0/0 r/w),   0.0mb/s,      0us cpu/op,   0.0ms latency
+590943: 8.784: Shutting down processes
+
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+603867: 0.000: Allocated 170MB of shared memory
+603867: 0.001: FileMicro-Delete Version 2.4 personality successfully loaded
+603867: 0.001: Creating/pre-allocating files and filesets
+603867: 0.008: Fileset bigfileset: 2000 files, 0 leafdirs, avg dir width = 100, avg dir depth = 1.7, 30.090MB
+603867: 10.264: Removed any existing fileset bigfileset in 11 seconds
+603867: 10.264: making tree for filset /users/Girish/fusemnt//bigfileset
+603867: 10.572: Creating fileset bigfileset...
+603867: 26.321: Preallocated 2000 of 2000 of fileset bigfileset in 16 seconds
+603867: 26.321: waiting for fileset pre-allocation to finish
+616016: 26.533: Starting 1 filedelete instances
+616017: 26.538: Starting 16 filedeletethread threads
+603867: 27.541: Running...
+603867: 30.542: Run took 3 seconds...
+603867: 30.543: Per-Operation Breakdown
+finish               501ops      167ops/s   0.0mb/s      0.0ms/op       80us/op-cpu [0ms - 0ms]
+limit                0ops        0ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+deletefile1          516ops      172ops/s   0.0mb/s     79.4ms/op     4845us/op-cpu [9ms - 102ms]
+603867: 30.543: IO Summary:   516 ops, 171.979 ops/s, (0/0 r/w),   0.0mb/s,      0us cpu/op,   0.0ms latency
+603867: 30.543: Shutting down processes
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+618667: 0.000: Allocated 170MB of shared memory
+618667: 0.001: FileMicro-Delete Version 2.4 personality successfully loaded
+618667: 0.001: Creating/pre-allocating files and filesets
+618667: 0.035: Fileset bigfileset: 2500 files, 0 leafdirs, avg dir width = 100, avg dir depth = 1.7, 37.593MB
+618667: 2.897: Removed any existing fileset bigfileset in 3 seconds
+618667: 2.897: making tree for filset /users/Girish/fusemnt//bigfileset
+618667: 3.246: Creating fileset bigfileset...
+618667: 20.586: Preallocated 2500 of 2500 of fileset bigfileset in 18 seconds
+618667: 20.586: waiting for fileset pre-allocation to finish
+633682: 21.317: Starting 1 filedelete instances
+633683: 21.322: Starting 16 filedeletethread threads
+618667: 22.325: Running...
+618667: 25.326: Run took 3 seconds...
+618667: 25.327: Per-Operation Breakdown
+finish               501ops      167ops/s   0.0mb/s      0.0ms/op      100us/op-cpu [0ms - 0ms]
+limit                0ops        0ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+deletefile1          516ops      172ops/s   0.0mb/s     80.8ms/op     4477us/op-cpu [9ms - 129ms]
+618667: 25.327: IO Summary:   516 ops, 171.982 ops/s, (0/0 r/w),   0.0mb/s,      0us cpu/op,   0.0ms latency
+618667: 25.327: Shutting down processesS

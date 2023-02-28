@@ -1,0 +1,93 @@
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+585601: 0.000: Allocated 170MB of shared memory
+585601: 0.001: FileMicro-WriteRandDsync Version 2.1 personality successfully loaded
+585601: 0.001: Creating/pre-allocating files and filesets
+585601: 0.005: File bigfile: 1024.000MB
+585601: 0.017: Removed any existing file bigfile in 1 seconds
+585601: 0.017: making tree for filset /users/Girish/fusemnt//bigfile
+585601: 0.039: Creating file bigfile...
+585601: 28.535: Preallocated 1 of 1 of file bigfile in 29 seconds
+585601: 28.536: waiting for fileset pre-allocation to finish
+585816: 28.536: Starting 1 filewriter instances
+585817: 28.540: Starting 1 filewriterthread threads
+585601: 29.541: Running...
+585601: 34.541: Run took 5 seconds...
+585601: 34.542: Per-Operation Breakdown
+finish               1330ops      266ops/s   0.0mb/s      0.0ms/op       68us/op-cpu [0ms - 0ms]
+write-file           1331ops      266ops/s   0.4mb/s      3.6ms/op      180us/op-cpu [1ms - 538ms]
+585601: 34.542: IO Summary:  1331 ops, 266.178 ops/s, (0/266 r/w),   0.4mb/s,  14884us cpu/op,   3.6ms latency
+585601: 34.542: Shutting down processes
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+588771: 0.000: Allocated 170MB of shared memory
+588771: 0.001: FileMicro-WriteRandDsync Version 2.1 personality successfully loaded
+588771: 0.001: Creating/pre-allocating files and filesets
+588771: 0.026: File bigfile: 1024.000MB
+588771: 0.026: Re-using file bigfile.
+588771: 0.026: Creating file bigfile...
+588771: 31.919: Preallocated 1 of 1 of file bigfile in 32 seconds
+588771: 31.919: waiting for fileset pre-allocation to finish
+589047: 31.920: Starting 1 filewriter instances
+589048: 31.924: Starting 1 filewriterthread threads
+588771: 32.925: Running...
+588771: 37.926: Run took 5 seconds...
+588771: 37.926: Per-Operation Breakdown
+finish               843ops      169ops/s   0.0mb/s      0.0ms/op       47us/op-cpu [0ms - 0ms]
+write-file           844ops      169ops/s   0.2mb/s      5.8ms/op      273us/op-cpu [1ms - 1713ms]
+588771: 37.926: IO Summary:   844 ops, 168.785 ops/s, (0/169 r/w),   0.2mb/s,  22713us cpu/op,   5.8ms latency
+588771: 37.926: Shutting down processes
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+589785: 0.000: Allocated 170MB of shared memory
+589785: 0.001: FileMicro-WriteRandDsync Version 2.1 personality successfully loaded
+589785: 0.001: Creating/pre-allocating files and filesets
+589785: 0.005: File bigfile: 1024.000MB
+589785: 0.005: Re-using file bigfile.
+589785: 0.005: Creating file bigfile...
+589785: 22.926: Preallocated 1 of 1 of file bigfile in 23 seconds
+589785: 22.926: waiting for fileset pre-allocation to finish
+589968: 22.927: Starting 1 filewriter instances
+589969: 22.931: Starting 1 filewriterthread threads
+589785: 23.932: Running...
+589785: 28.933: Run took 5 seconds...
+589785: 28.934: Per-Operation Breakdown
+finish               443ops       89ops/s   0.0mb/s      0.0ms/op       68us/op-cpu [0ms - 0ms]
+write-file           444ops       89ops/s   0.0mb/s     11.0ms/op      405us/op-cpu [1ms - 3011ms]
+589785: 28.934: IO Summary:   444 ops, 88.792 ops/s, (0/89 r/w),   0.0mb/s,  41104us cpu/op,  11.0ms latency
+589785: 28.934: Shutting down processes
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+590166: 0.000: Allocated 170MB of shared memory
+590166: 0.001: FileMicro-WriteRandDsync Version 2.1 personality successfully loaded
+590166: 0.001: Creating/pre-allocating files and filesets
+590166: 0.009: File bigfile: 1024.000MB
+590166: 0.021: Removed any existing file bigfile in 1 seconds
+590166: 0.021: making tree for filset /users/Girish/fusemnt//bigfile
+590166: 0.044: Creating file bigfile...
+590166: 46.165: Preallocated 1 of 1 of file bigfile in 47 seconds
+590166: 46.165: waiting for fileset pre-allocation to finish
+590500: 46.165: Starting 1 filewriter instances
+590501: 46.169: Starting 1 filewriterthread threads
+590166: 47.170: Running...
+590166: 52.171: Run took 5 seconds...
+590166: 52.171: Per-Operation Breakdown
+finish               544ops      109ops/s   0.0mb/s      0.0ms/op       37us/op-cpu [0ms - 0ms]
+write-file           545ops      109ops/s   0.2mb/s      9.0ms/op      349us/op-cpu [2ms - 1875ms]
+590166: 52.171: IO Summary:   545 ops, 108.992 ops/s, (0/109 r/w),   0.2mb/s,  34569us cpu/op,   9.0ms latency
+590166: 52.171: Shutting down processes

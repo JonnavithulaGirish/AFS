@@ -1,0 +1,69 @@
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+647307: 0.000: Allocated 170MB of shared memory
+647307: 0.001: Stat File Version 1.0 personality successfully loaded
+647307: 0.001: Creating/pre-allocating files and filesets
+647307: 0.031: Fileset bigfileset: 20000 files, 0 leafdirs, avg dir width = 200, avg dir depth = 1.9, 2483.404MB
+647307: 9.695: Removed any existing fileset bigfileset in 10 seconds
+647307: 9.695: making tree for filset /users/Girish/fusemnt//bigfileset
+647307: 11.084: Creating fileset bigfileset...
+647307: 389.287: Preallocated 20000 of 20000 of fileset bigfileset in 379 seconds
+647307: 389.287: waiting for fileset pre-allocation to finish
+670099: 389.287: Starting 1 examinefiles instances
+670100: 389.293: Starting 20 examinefilethread threads
+647307: 390.296: Running...
+647307: 400.298: Run took 10 seconds...
+647307: 400.299: Per-Operation Breakdown
+statfile1            8270ops      827ops/s   0.0mb/s     23.9ms/op     3522us/op-cpu [3ms - 67ms]
+647307: 400.299: IO Summary:  8270 ops, 826.928 ops/s, (0/0 r/w),   0.0mb/s,      0us cpu/op,   0.0ms latency
+647307: 400.299: Shutting down processes
+
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+679414: 0.000: Allocated 170MB of shared memory
+679414: 0.001: Stat File Version 1.0 personality successfully loaded
+679414: 0.001: Creating/pre-allocating files and filesets
+679414: 0.031: Fileset bigfileset: 20000 files, 0 leafdirs, avg dir width = 200, avg dir depth = 1.9, 2483.404MB
+679414: 117.888: Removed any existing fileset bigfileset in 118 seconds
+679414: 117.888: making tree for filset /users/Girish/fusemnt//bigfileset
+679414: 119.300: Creating fileset bigfileset...
+679414: 516.962: Preallocated 20000 of 20000 of fileset bigfileset in 398 seconds
+679414: 516.962: waiting for fileset pre-allocation to finish
+703789: 516.963: Starting 1 examinefiles instances
+703790: 516.967: Starting 20 examinefilethread threads
+679414: 517.972: Running...
+679414: 527.973: Run took 10 seconds...
+679414: 527.974: Per-Operation Breakdown
+statfile1            8121ops      812ops/s   0.0mb/s     24.4ms/op     3522us/op-cpu [11ms - 68ms]
+679414: 527.974: IO Summary:  8121 ops, 812.031 
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+715467: 0.000: Allocated 170MB of shared memory
+715467: 0.001: Stat File Version 1.0 personality successfully loaded
+715467: 0.001: Creating/pre-allocating files and filesets
+715467: 0.040: Fileset bigfileset: 20000 files, 0 leafdirs, avg dir width = 200, avg dir depth = 1.9, 2483.404MB
+715467: 53.816: Removed any existing fileset bigfileset in 54 seconds
+715467: 53.816: making tree for filset /users/Girish/fusemnt//bigfileset
+715467: 55.186: Creating fileset bigfileset...
+715467: 509.999: Preallocated 20000 of 20000 of fileset bigfileset in 455 seconds
+715467: 509.999: waiting for fileset pre-allocation to finish
+739682: 510.000: Starting 1 examinefiles instances
+739683: 510.004: Starting 20 examinefilethread threads
+715467: 511.008: Running...
+715467: 521.009: Run took 10 seconds...
+715467: 521.010: Per-Operation Breakdown
+statfile1            6857ops      686ops/s   0.0mb/s     28.9ms/op     3474us/op-cpu [12ms - 1530ms]
+715467: 521.010: IO Summary:  6857 ops, 685.643 ops/s, (0/0 r/w),   0.0mb/s,      0us cpu/op,   0.0ms latency
+715467: 521.010: Shutting down processes
+node1:~/filebench-1.4.9.1/filebench_workloads> 

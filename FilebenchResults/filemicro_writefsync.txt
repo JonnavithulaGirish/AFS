@@ -1,0 +1,74 @@
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+348428: 0.000: Allocated 170MB of shared memory
+348428: 0.001: FileMicro-WriteFsync Version 2.1 personality successfully loaded
+348428: 0.001: Creating/pre-allocating files and filesets
+348428: 0.005: File bigfile: 0.000MB
+348428: 0.018: Removed any existing file bigfile in 1 seconds
+348428: 0.018: making tree for filset /users/Girish/fusemnt//bigfile
+348428: 0.041: Creating file bigfile...
+348428: 0.147: Preallocated 1 of 1 of file bigfile in 1 seconds
+348428: 0.147: waiting for fileset pre-allocation to finish
+348437: 0.147: Starting 1 filewriter instances
+348438: 0.151: Starting 1 filewriterthread threads
+348428: 1.152: Running...
+348428: 423.184: Run took 422 seconds...
+348428: 423.185: Per-Operation Breakdown
+finish               128ops        0ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+sync-file            128ops        0ops/s   0.0mb/s     21.8ms/op        0us/op-cpu [1ms - 39ms]
+append-file          131073ops      311ops/s   2.4mb/s      3.1ms/op      157us/op-cpu [1ms - 9156ms]
+348428: 423.185: IO Summary: 131201 ops, 310.879 ops/s, (0/311 r/w),   2.4mb/s,   9215us cpu/op,   3.1ms latency
+348428: 423.185: Shutting down processes
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+351358: 0.000: Allocated 170MB of shared memory
+351358: 0.001: FileMicro-WriteFsync Version 2.1 personality successfully loaded
+351358: 0.001: Creating/pre-allocating files and filesets
+351358: 0.005: File bigfile: 0.000MB
+351358: 0.288: Removed any existing file bigfile in 1 seconds
+351358: 0.288: making tree for filset /users/Girish/fusemnt//bigfile
+351358: 0.309: Creating file bigfile...
+351358: 0.409: Preallocated 1 of 1 of file bigfile in 1 seconds
+351358: 0.409: waiting for fileset pre-allocation to finish
+351366: 0.410: Starting 1 filewriter instances
+351367: 0.414: Starting 1 filewriterthread threads
+351358: 1.415: Running...
+351358: 452.450: Run took 451 seconds...
+351358: 452.451: Per-Operation Breakdown
+finish               128ops        0ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+sync-file            128ops        0ops/s   0.0mb/s     42.4ms/op        0us/op-cpu [1ms - 207ms]
+append-file          131073ops      291ops/s   2.3mb/s      3.3ms/op      150us/op-cpu [1ms - 2181ms]
+351358: 452.451: IO Summary: 131201 ops, 290.889 ops/s, (0/291 r/w),   2.3mb/s,  10912us cpu/op,   3.3ms latency
+351358: 452.451: Shutting down processes
+
+
+
+Filebench Version 1.4.9.1
+WARNING: Could not open /proc/sys/kernel/shmmax file!
+It means that you probably ran Filebench not as a root. Filebench will not increase shared
+region limits in this case, which can lead to the failures on certain workloads.
+354577: 0.000: Allocated 170MB of shared memory
+354577: 0.001: FileMicro-WriteFsync Version 2.1 personality successfully loaded
+354577: 0.001: Creating/pre-allocating files and filesets
+354577: 0.005: File bigfile: 0.000MB
+354577: 0.462: Removed any existing file bigfile in 1 seconds
+354577: 0.462: making tree for filset /users/Girish/fusemnt//bigfile
+354577: 0.482: Creating file bigfile...
+354577: 0.588: Preallocated 1 of 1 of file bigfile in 1 seconds
+354577: 0.588: waiting for fileset pre-allocation to finish
+354583: 0.588: Starting 1 filewriter instances
+354584: 0.592: Starting 1 filewriterthread threads
+354577: 1.593: Running...
+354577: 473.631: Run took 472 seconds...
+354577: 473.631: Per-Operation Breakdown
+finish               128ops        0ops/s   0.0mb/s      0.0ms/op        0us/op-cpu [0ms - 0ms]
+sync-file            128ops        0ops/s   0.0mb/s     52.6ms/op      156us/op-cpu [2ms - 239ms]
+append-file          131073ops      278ops/s   2.2mb/s      3.4ms/op      161us/op-cpu [1ms - 4995ms]
+354577: 473.631: IO Summary: 131201 ops, 277.946 ops/s, (0/278 r/w),   2.2mb/s,  12773us cpu/op,   3.5ms latency
+354577: 473.631: Shutting down processes
